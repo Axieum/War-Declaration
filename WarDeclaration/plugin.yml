@@ -1,0 +1,13 @@
+name: WarDeclaration
+author: _Axiom
+version: 1.0
+main: me.axiom.bpl.wardeclaration.WarDeclaration
+depend: [Factions]
+
+commands:
+    warsave:
+        description: Saves all files.
+        permission: wardeclaration.save
+    war:
+        description: Declare war against an opposing clan.
+        permission: wardeclaration.use
