@@ -50,10 +50,6 @@ public class CmdExecutor implements CommandExecutor {
 			} else {
 				// They're in the console, show them the admin commands.
 				s.sendMessage("§6-------§c§lClan Wars§r§6-------");
-				s.sendMessage("§4/war §c§ldeclare <enemy_clan>");
-				s.sendMessage("§4/war §c§lcancel");
-				s.sendMessage("§4/war §c§lforfeit");
-				s.sendMessage("§4/war §c§l<accept/deny>");
 				s.sendMessage("§8/war §7§llist");
 				s.sendMessage("§8/war §7§ldeclare <clan> <clan>");
 				s.sendMessage("§8/war §7§lcancel <clan>");
