@@ -22,26 +22,28 @@ public class WarDeclaration extends JavaPlugin {
 	public void onEnable() {
 		
 		if (!(getDataFolder()).exists()) {
-			logger.info(pdf.getName() + " (v" + pdf.getVersion() + ") : attempting to create plugin data folder.");
+			logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] attempting to create plugin data folder.");
             getDataFolder().mkdir();
-            logger.info(pdf.getName() + " (v" + pdf.getVersion() + ") : plugin data folder has been successfully created.");
+            logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] plugin data folder has been successfully created.");
         }
 		
 		if (!factionsWarFile.exists()) {
 			try {
-				logger.info(pdf.getName() + " (v" + pdf.getVersion() + ") : attempting to create files.");
+				logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] attempting to create files.");
 				factionsWarFile.createNewFile();
-				logger.info(pdf.getName() + " (v" + pdf.getVersion() + ") : files have been successfully created.");
+				logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] files have been successfully created.");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
         }
 		
+		factionsWar = YamlConfiguration.loadConfiguration(factionsWarFile);
+		
 		getCommand("war").setExecutor(new CmdExecutor());
 		
 		initialiseFactionsWarFile();
 		
-		logger.info(pdf.getName() + " (v" + pdf.getVersion() + ") : has been successfully enabled.");
+		logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] has been successfully enabled.");
 		
 	}
 	
@@ -49,13 +51,12 @@ public class WarDeclaration extends JavaPlugin {
 		
 		try {
 			factionsWar.save(factionsWarFile);
-			logger.info(pdf.getName() + " (v" + pdf.getVersion() + ") : saving all files.");
+			logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] saving all files.");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
-		logger.info(pdf.getName() + " (v" + pdf.getVersion() + ") : has been disabled.");
-		
+		logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] has been disabled.");
 	}
 	
 	public void initialiseFactionsWarFile() {
