@@ -17,7 +17,7 @@ public class WarDeclaration extends JavaPlugin {
 	PluginDescriptionFile pdf = this.getDescription();
 	
 	File factionsWarFile = new File(getDataFolder() + "/factionsWar.yml");
-	YamlConfiguration factionsWar;
+	YamlConfiguration factionsWar = YamlConfiguration.loadConfiguration(factionsWarFile);
 	
 	public void onEnable() {
 		
@@ -36,8 +36,6 @@ public class WarDeclaration extends JavaPlugin {
 				e.printStackTrace();
 			}
         }
-		
-		factionsWar = YamlConfiguration.loadConfiguration(factionsWarFile);
 		
 		getCommand("war").setExecutor(new CmdExecutor());
 		
@@ -65,6 +63,12 @@ public class WarDeclaration extends JavaPlugin {
 			if (!(factionsWar.contains(f.getName()))) {
 				factionsWar.set(f.getName(), "none");
 			}
+		}
+		
+		try {
+			factionsWar.save(factionsWarFile);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		
 	}
