@@ -14,7 +14,7 @@ import com.massivecraft.factions.entity.FactionColl;
 public class WarDeclaration extends JavaPlugin {
 	
 	Logger logger = Logger.getLogger("minecraft");
-	PluginDescriptionFile pdf;
+	PluginDescriptionFile pdf = this.getDescription();
 	
 	File factionsWarFile = new File(getDataFolder() + "/factionsWar.yml");
 	YamlConfiguration factionsWar;
