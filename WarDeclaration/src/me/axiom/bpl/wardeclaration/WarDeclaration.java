@@ -64,12 +64,6 @@ public class WarDeclaration extends JavaPlugin {
 		logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] has been disabled.");
 	}
 	
-	public YamlConfiguration getFactionsWarFile() {
-		
-		return factionsWar;
-		
-	}
-	
 	public void saveFactionsWarFile() {
 		
 		try {
