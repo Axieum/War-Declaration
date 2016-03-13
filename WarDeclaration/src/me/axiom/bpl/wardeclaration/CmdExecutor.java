@@ -14,8 +14,8 @@ import com.massivecraft.factions.entity.MPlayer;
 public class CmdExecutor implements CommandExecutor {
 
 	WarDeclaration plugin;
-	public void plugin(WarDeclaration plugin) {
-		this.plugin = plugin;
+	public void CmdExecutor(WarDeclaration instance) {
+		plugin = instance;
 	}
 	
 	@Override
@@ -40,34 +40,34 @@ public class CmdExecutor implements CommandExecutor {
 		if (args.length == 0) { // They typed, "/war".
 			if (isPlayer) { // Check if they're in-game or in console.
 				// They're in-game, show them the player commands.
-				s.sendMessage("§6-------§c§lClan Wars§r§6-------");
-				s.sendMessage("§8/war §7§ldeclare <enemy_clan>");
-				s.sendMessage("§8/war §7§lcancel");
-				s.sendMessage("§8/war §7§lforfeit");
-				s.sendMessage("§8/war §7§laccept/deny");
-				s.sendMessage("§8/war §7§llist");
-				s.sendMessage("§6---------------------------");
+				s.sendMessage("Â§6-------Â§cÂ§lClan WarsÂ§rÂ§6-------");
+				s.sendMessage("Â§8/war Â§7Â§ldeclare <enemy_clan>");
+				s.sendMessage("Â§8/war Â§7Â§lcancel");
+				s.sendMessage("Â§8/war Â§7Â§lforfeit");
+				s.sendMessage("Â§8/war Â§7Â§laccept/deny");
+				s.sendMessage("Â§8/war Â§7Â§llist");
+				s.sendMessage("Â§6---------------------------");
 			} else {
 				// They're in the console, show them the admin commands.
-				s.sendMessage("§6-------§c§lClan Wars§r§6-------");
-				s.sendMessage("§8/war §7§llist");
-				s.sendMessage("§8/war §7§ldeclare <clan> <clan>");
-				s.sendMessage("§8/war §7§lcancel <clan>");
-				s.sendMessage("§8/war §7§lforfeit <clan>");
-				s.sendMessage("§6---------------------------");
+				s.sendMessage("Â§6-------Â§cÂ§lClan WarsÂ§rÂ§6-------");
+				s.sendMessage("Â§8/war Â§7Â§llist");
+				s.sendMessage("Â§8/war Â§7Â§ldeclare <clan> <clan>");
+				s.sendMessage("Â§8/war Â§7Â§lcancel <clan>");
+				s.sendMessage("Â§8/war Â§7Â§lforfeit <clan>");
+				s.sendMessage("Â§6---------------------------");
 			}
 		}
 		
 		if (args.length == 1) { // They typed, "/war something".
 			if (args[0].equalsIgnoreCase("list")) { // They typed, "/war list".
-				s.sendMessage("§6-------§c§lWar List§r§6-------");
+				s.sendMessage("Â§6-------Â§cÂ§lWar ListÂ§rÂ§6-------");
 				for (Faction fa : FactionColl.get().getAll()) { // Gets every faction and runs the following code FOR EACH.
 					HashSet<String> factionsProcessed = new HashSet<String>(); // This will hold all factions already shown, stops duplicates.
 					if (plugin.factionsWar.getString(fa.getName()) != "none" && !(factionsProcessed.contains(fa.getName()))) { // Checks if the faction is at war.
 						if (f == fa) { // If the sender's faction is shown, make they're faction green.
-							s.sendMessage("§a" + fa.getName() + " §7<--[]--> §e" + plugin.factionsWar.getString(fa.getName()));
+							s.sendMessage("Â§a" + fa.getName() + " Â§7<--[]--> Â§e" + plugin.factionsWar.getString(fa.getName()));
 						} else {
-							s.sendMessage("§e" + fa.getName() + " §7<--[]--> §e" + plugin.factionsWar.getString(fa.getName()));
+							s.sendMessage("Â§e" + fa.getName() + " Â§7<--[]--> Â§e" + plugin.factionsWar.getString(fa.getName()));
 						}
 						factionsProcessed.add(plugin.factionsWar.getString(fa.getName()));
 					}
