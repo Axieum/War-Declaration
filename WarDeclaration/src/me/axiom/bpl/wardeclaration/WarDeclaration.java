@@ -19,14 +19,17 @@ public class WarDeclaration extends JavaPlugin {
 	File factionsWarFile = new File(getDataFolder() + "/factionsWar.yml");
 	YamlConfiguration factionsWar = YamlConfiguration.loadConfiguration(factionsWarFile);
 	
+	// This is triggered when the plugin starts. (Hence, "onEnable").
 	public void onEnable() {
 		
+		// Check if the plugin folder exists, if not, then create it.
 		if (!(getDataFolder()).exists()) {
 			logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] attempting to create plugin data folder.");
             getDataFolder().mkdir();
             logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] plugin data folder has been successfully created.");
         }
 		
+		// Check if the factionsWar.yml file exists, if not, then create it.
 		if (!factionsWarFile.exists()) {
 			try {
 				logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] attempting to create files.");
@@ -37,16 +40,20 @@ public class WarDeclaration extends JavaPlugin {
 			}
         }
 		
+		// This will trigger the CmdExecutor class if "/war ..." was typed.
 		getCommand("war").setExecutor(new CmdExecutor());
 		
+		// Add all factions to the file for extra convenience.
 		initialiseFactionsWarFile();
 		
 		logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] has been successfully enabled.");
 		
 	}
 	
+	// This is triggered when the plugin stops. (When the server is stopped or reloaded).
 	public void onDisable() {
 		
+		// Save the factionsWar.yml file.
 		try {
 			factionsWar.save(factionsWarFile);
 			logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] saving all files.");
@@ -55,6 +62,22 @@ public class WarDeclaration extends JavaPlugin {
 		}
 		
 		logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] has been disabled.");
+	}
+	
+	public YamlConfiguration getFactionsWarFile() {
+		
+		return factionsWar;
+		
+	}
+	
+	public void saveFactionsWarFile() {
+		
+		try {
+			factionsWar.save(factionsWarFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public void initialiseFactionsWarFile() {
