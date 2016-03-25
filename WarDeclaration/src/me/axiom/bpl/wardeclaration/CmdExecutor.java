@@ -190,7 +190,7 @@ public class CmdExecutor implements CommandExecutor {
 				HashSet<String> factionsProcessed = new HashSet<String>();
 				for (Faction fa : FactionColl.get().getAll()) {
 					if (!(fa.getName().equalsIgnoreCase("safezone")) && !(fa.getName().equalsIgnoreCase("warzone")) && !(fa.getName().equalsIgnoreCase("wilderness"))) {
-						if (getWarTarget(fa).getName().equalsIgnoreCase("none") && !factionsProcessed.contains(fa.getName())) {
+						if (!getWarTarget(fa).getName().equalsIgnoreCase("none") && !factionsProcessed.contains(fa.getName())) {
 							s.sendMessage(fa.getColorTo(mP) + fa.getName() + " §7<--[" + statusToColour(getWarStatus(fa)) + "§7]--> " + getWarTarget(fa).getColorTo(mP) + getWarTarget(fa));
 							factionsProcessed.add(getWarTarget(fa).getName());
 						}
