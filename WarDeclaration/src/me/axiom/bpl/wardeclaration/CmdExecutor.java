@@ -189,10 +189,11 @@ public class CmdExecutor implements CommandExecutor {
 				s.sendMessage("§6------------§c§lWars Upcoming§r§6------------");
 				HashSet<String> factionsProcessed = new HashSet<String>();
 				for (Faction fa : FactionColl.get().getAll()) {
-					if (!(fa.getName().equalsIgnoreCase("safezone")) && !(fa.getName().equalsIgnoreCase("warzone")) && !(fa.getName().equalsIgnoreCase("wilderness"))) {
-						if (getWarTarget(fa) != null && !factionsProcessed.contains(fa.getName())) {
-							s.sendMessage(fa.getColorTo(mP) + fa.getName() + " §7<--[" + statusToColour(getWarStatus(fa)) + "§7]--> " + getWarTarget(fa).getColorTo(mP) + getWarTarget(fa));
+					if (!(fa.getName().equalsIgnoreCase("safezone")) && !(fa.getName().equalsIgnoreCase("warzone")) && !(fa.getName().equalsIgnoreCase(FactionColl.get().getByName("wilderness").getName()))) {
+						if (getWarTarget(fa) != null && getWarRequester(fa) != null && !factionsProcessed.contains(fa.getName())) {
+							s.sendMessage(fa.getColorTo(mP) + getWarRequester(fa).getName() + " §7<--[" + statusToColour(getWarStatus(fa)) + "§7]--> " + getWarTarget(fa).getColorTo(mP) + getWarTarget(fa).getName());
 							factionsProcessed.add(getWarTarget(fa).getName());
+							factionsProcessed.add(getWarRequester(fa).getName());
 						}
 					}
 				}
