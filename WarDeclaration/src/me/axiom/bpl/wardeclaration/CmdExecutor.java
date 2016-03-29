@@ -48,6 +48,39 @@ public class CmdExecutor implements CommandExecutor {
 			}
 		}
 		
+		// 
+		
+		// FORFEIT
+		if (args.length == 1) {
+			if (args[0].equalsIgnoreCase("forfeit")) {
+				if (mP.hasFaction()) {
+					if (mP == f.getLeader()) {
+						if (hasWar(f)) {
+							// The war request must be accepted or engaged in order to forfeit.
+							if (getWarStatus(f).equalsIgnoreCase("accepted") || getWarStatus(f).equalsIgnoreCase("engaged")) {
+								Faction enemyF = getWarOpponent(f);
+								setWarStatus(f, "forfeited");
+								setWarStatus(enemyF, "forfeited");
+								s.sendMessage("§eYou §chave §4forfeited §cthe war against " + enemyF.getColorTo(f) + enemyF.getName() + "§c!");
+								f.sendMessage("§cYour clan has §4forfeited §cthe war against " + enemyF.getColorTo(f) + enemyF.getName() + "§c!");
+								enemyF.sendMessage(f.getColorTo(enemyF) + f.getName() + " §ahas §cforfeited §athe war against your clan!");
+								plugin.saveFactionWarsFile();
+							} else { // War is not accepted or engaged and thus cannot be forfeited.
+								s.sendMessage("§cYou cannot forfeit a war that isn't active!");
+								s.sendMessage("§cInstead, you may cancel the war. §7/war cancel§c.");
+							}
+						} else {
+							s.sendMessage("§cYour clan is not involved in any wars!");
+						}
+					} else  {
+						s.sendMessage("§cWars may only be forfeited by your clan leader! §7(§e" + f.getLeader().getName() + "§7)");
+					}
+				} else {
+					s.sendMessage("§cYou are not in a clan!");
+				} 
+			}
+		}
+		
 		// DECLARE
 		if (args.length == 2) {
 			if (args[0].equalsIgnoreCase("declare")) {
@@ -66,7 +99,7 @@ public class CmdExecutor implements CommandExecutor {
 									s.sendMessage("§eYou §7have requested a war against " + enemyF.getColorTo(mP) + enemyF.getName() + "§7!");
 									f.sendMessage("§7Your clan has requested a war against " + enemyF.getColorTo(f) + enemyF.getName() + "§7!");
 									enemyF.sendMessage(f.getColorTo(enemyF) + f.getName() + " §7has requested a war against your clan!");
-									enemyF.getLeader().sendMessage("§7To accept the war against " + f.getColorTo(enemyF) + f.getName() + " §7use the §3'/war <accept/deny>'§7.");
+									enemyF.getLeader().sendMessage("§7To respond to the war against " + f.getColorTo(enemyF) + f.getName() + " §7use §3'/war <accept/deny>'§7.");
 									plugin.saveFactionWarsFile();
 								} else {
 									if (hasWar(f)) {
@@ -79,7 +112,7 @@ public class CmdExecutor implements CommandExecutor {
 								s.sendMessage("§e" + args[1] + " §cdoes not exist!");
 							}
 						} else {
-							s.sendMessage("§cYou cannot declare a war against yourself!");
+							s.sendMessage("§cYou cannot declare a war against your own clan!");
 						}
 					} else {
 						s.sendMessage("§cWars may only be declared by your clan leader! §7(§e" + f.getLeader().getName() + "§7)");
@@ -156,7 +189,7 @@ public class CmdExecutor implements CommandExecutor {
 			if (args[0].equalsIgnoreCase("cancel")) {
 				if (mP.hasFaction()) {
 					if (mP == f.getLeader()) {
-						if (hasWar(f)) { 
+						if (hasWar(f) && f == getWarRequester(f)) { 
 							if (getWarStatus(f).equalsIgnoreCase("pending")) {
 								Faction enemyF = getWarTarget(f);
 								setWarTarget(f, null);
@@ -172,7 +205,7 @@ public class CmdExecutor implements CommandExecutor {
 								s.sendMessage("§cInstead, you must forfeit the war. §7/war forfeit§c.");
 							}
 						} else {
-							s.sendMessage("§cYour clan has no pending wars!");
+							s.sendMessage("§cYour clan has no war requests!");
 						}
 					} else {
 						s.sendMessage("§cWars may only be cancelled by your clan leader! §7(§e" + f.getLeader().getName() + "§7)");
@@ -191,9 +224,11 @@ public class CmdExecutor implements CommandExecutor {
 				for (Faction fa : FactionColl.get().getAll()) {
 					if (!(fa.getName().equalsIgnoreCase("safezone")) && !(fa.getName().equalsIgnoreCase("warzone")) && !(fa.getName().equalsIgnoreCase(FactionColl.get().getByName("wilderness").getName()))) {
 						if (getWarTarget(fa) != null && getWarRequester(fa) != null && !factionsProcessed.contains(fa.getName())) {
-							s.sendMessage(fa.getColorTo(mP) + getWarRequester(fa).getName() + " §7<--[" + statusToColour(getWarStatus(fa)) + "§7]--> " + getWarTarget(fa).getColorTo(mP) + getWarTarget(fa).getName());
-							factionsProcessed.add(getWarTarget(fa).getName());
-							factionsProcessed.add(getWarRequester(fa).getName());
+							if (!getWarStatus(fa).equalsIgnoreCase("forfeited") && !getWarStatus(fa).equalsIgnoreCase("denied") && !getWarStatus(fa).equalsIgnoreCase("cancelled")) {
+								s.sendMessage(getWarRequester(fa).getColorTo(mP) + getWarRequester(fa).getName() + " §7<--[" + statusToColour(getWarStatus(fa)) + "§7]--> " + getWarTarget(fa).getColorTo(mP) + getWarTarget(fa).getName());
+								factionsProcessed.add(getWarTarget(fa).getName());
+								factionsProcessed.add(getWarRequester(fa).getName());
+							}
 						}
 					}
 				}
@@ -221,10 +256,6 @@ public class CmdExecutor implements CommandExecutor {
 		case "accepted":
 			m = "§aACCEPTED";
 			break;
-		
-		case "denied":
-			m = "§cDENIED";
-			break;
 			
 		}
 		
@@ -232,8 +263,16 @@ public class CmdExecutor implements CommandExecutor {
 		
 	}
 	
+	public Faction getWarOpponent(Faction f) {
+		if (!plugin.factionWars.getString(f.getName() + ".Target").equalsIgnoreCase(f.getName()) && !plugin.factionWars.getString(f.getName() + ".Target").equalsIgnoreCase("none")) {
+			return FactionColl.get().getByName(plugin.factionWars.getString(f.getName() + ".Target"));
+		} else {
+			return FactionColl.get().getByName(plugin.factionWars.getString(f.getName() + ".Requester"));
+		}
+	}
+	
 	public boolean hasWar(Faction f) {
-		if (!plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("available") || !plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("denied")) {
+		if (!(plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("available")) || !(plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("denied")) || !(plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("forfeited")) || !(plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("cancelled"))) {
 			return true;
 		} else {
 			return false;
