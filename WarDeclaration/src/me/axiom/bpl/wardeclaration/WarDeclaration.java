@@ -2,6 +2,7 @@ package me.axiom.bpl.wardeclaration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.logging.Logger;
 
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -18,6 +19,8 @@ public class WarDeclaration extends JavaPlugin {
 	
 	public File factionWarsFile = new File(getDataFolder() + "/FactionWars.yml");
 	public YamlConfiguration factionWars = YamlConfiguration.loadConfiguration(factionWarsFile);
+	
+	public HashSet<Faction> engagedWars = new HashSet<Faction>();
 	
 	public void onEnable() {
 		
@@ -39,10 +42,12 @@ public class WarDeclaration extends JavaPlugin {
 		
 		getCommand("war").setExecutor(new CmdExecutor(this));
 		
-		//getServer().getPluginManager().registerEvents(new LoginListener(this), this);
-		//getServer().getPluginManager().registerEvents(new FactionNameChangeListener(this), this);
+		getServer().getPluginManager().registerEvents(new LoginListener(this), this);
+		getServer().getPluginManager().registerEvents(new FactionNameChangeListener(this), this);
+		getServer().getPluginManager().registerEvents(new FactionCreationListener(this), this);
 
 		initialiseFactionWarsFile();
+		initialiseEngagedWars();
 		
 		logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] has been successfully enabled.");
 		
@@ -56,6 +61,18 @@ public class WarDeclaration extends JavaPlugin {
 		
 	}
 	
+	public void initialiseEngagedWars() {
+		
+		for (Faction f : FactionColl.get().getAll()) {
+			if (factionWars.contains(f.getName())) {
+				if (factionWars.getBoolean(f.getName() + ".Engaged")) {
+					
+				}
+			}
+		}
+		
+	}
+	
 	public void initialiseFactionWarsFile() {
 		
 		for (Faction f : FactionColl.get().getAll()) {
@@ -63,6 +80,9 @@ public class WarDeclaration extends JavaPlugin {
 				factionWars.set(f.getName() + ".Target", "none");
 				factionWars.set(f.getName() + ".Requester", "none");
 				factionWars.set(f.getName() + ".Status", "available");
+				factionWars.set(f.getName() + ".Engaged", false);
+				factionWars.set(f.getName() + ".ForfeitedBy", "none");
+				factionWars.set(f.getName() + ".TimeOfDeclaration", 0);
 			}
 		}
 		
