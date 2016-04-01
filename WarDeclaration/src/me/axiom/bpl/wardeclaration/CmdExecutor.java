@@ -1,7 +1,9 @@
 package me.axiom.bpl.wardeclaration;
 
+import java.util.Calendar;
 import java.util.HashSet;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -40,6 +42,8 @@ public class CmdExecutor implements CommandExecutor {
 				s.sendMessage("§8/war §7§lforfeit");
 				s.sendMessage("§8/war §7§laccept/deny");
 				s.sendMessage("§8/war §7§lupcoming");
+				s.sendMessage("§8/war §7§lstatus");
+				s.sendMessage("§8/war §7§lengage");
 				s.sendMessage("§6---------------------------");
 			} else {
 				s.sendMessage("§6---------§c§lClan Wars§r§6---------");
@@ -48,7 +52,72 @@ public class CmdExecutor implements CommandExecutor {
 			}
 		}
 		
-		// 
+		// ENGAGE
+		if (args.length == 1) {
+			if (args[0].equalsIgnoreCase("engage")) {
+				if (mP.hasFaction()) {
+					if (mP == f.getLeader()) {
+						if (hasWar(f)) {
+							// The war request must be accepted in order to engage.
+							if (getWarStatus(f).equalsIgnoreCase("accepted")) {
+								Faction enemyF = getWarOpponent(f);
+								setWarStatus(f, "engaged");
+								s.sendMessage("§eYou §ahave §2engaged §athe war against " + enemyF.getColorTo(f) + enemyF.getName() + "§a!");
+								f.sendMessage("§aYour clan has engaged the war against " + enemyF.getColorTo(f) + enemyF.getName() + "§a!");
+								if (getWarStatus(enemyF).equalsIgnoreCase("engaged")) {
+									enemyF.sendMessage("§e" + f.getColorTo(enemyF) + f.getName() + " §ahas §2engaged §athe war against your clan!");
+									setWarEngaged(f, true);
+									setWarEngaged(enemyF, true);
+									for (Player p : Bukkit.getOnlinePlayers()) {
+										p.sendMessage("§6[§cWAR§6] §7The war between " + getWarRequester(f).getColorTo((MPlayer)p) + getWarRequester(f).getName() + " §7and " + getWarTarget(f).getColorTo((MPlayer)p) + getWarTarget(f).getName() + " §7has been §3ENGAGED§7!");
+									}
+								} else {
+									f.sendMessage("§3Waiting for " + enemyF.getColorTo(f) + enemyF.getName() + " §3to also engage the war!");
+									enemyF.sendMessage("§e" + f.getColorTo(enemyF) + f.getName() + " §ahas §2engaged §athe war against your clan!");
+									enemyF.sendMessage("§3You must also engage the war against " + f.getColorTo(f) + f.getName() + "§3!");
+								}
+								plugin.saveFactionWarsFile();
+							} else if (getWarEngaged(f)) {
+								s.sendMessage("§cYour war is already engaged!");
+							} else if (!getWarStatus(f).equalsIgnoreCase("engaged") || !getWarStatus(f).equalsIgnoreCase("accepted")) {
+								s.sendMessage("§cYou cannot engage a war that is not agreed upon! §7(" + statusToColour(getWarStatus(f)) + "§7)");
+							}
+						} else {
+							s.sendMessage("§cYour clan is not involved in any wars!");
+						}
+					} else  {
+						s.sendMessage("§cWars may only be engaged by your clan leader! §7(§e" + f.getLeader().getName() + "§7)");
+					}
+				} else {
+					s.sendMessage("§cYou are not in a clan!");
+				} 
+			}
+		}
+		
+		// STATUS
+		if (args.length == 1) {
+			if (args[0].equalsIgnoreCase("status")) {
+				if (mP.hasFaction()) {
+					s.sendMessage("§6-----§a§l" + f.getName() + " §c§lStatus§r§6-----");
+					if (hasWar(f)) {
+						String status = getWarStatus(f);
+						Faction target = getWarTarget(f);
+						Faction requester = getWarRequester(f);
+						Faction forfeiter = getWarForfeiter(f);
+						String timeOfDeclaration = convertMillisToDate(getWarTimeOfDeclaration(f));
+						s.sendMessage("§7Declared by " + requester.getColorTo(f) + requester.getName() + "§7.");
+						s.sendMessage("§7Targeted against " + target.getColorTo(f) + target.getName() + "§7.");
+						s.sendMessage("§7Time of declaration: §e" + timeOfDeclaration + "§7.");
+						s.sendMessage("§7Current status: " + statusToColour(status) + "§7.");
+						s.sendMessage("§7Forfeited by " + forfeiter.getColorTo(f) + forfeiter.getName() + "§7.");
+					} else {
+						s.sendMessage("§cYour clan is not involved in any wars!");
+					}
+				} else {
+					s.sendMessage("§cYou are not in a clan!");
+				}
+			}
+		}
 		
 		// FORFEIT
 		if (args.length == 1) {
@@ -61,9 +130,16 @@ public class CmdExecutor implements CommandExecutor {
 								Faction enemyF = getWarOpponent(f);
 								setWarStatus(f, "forfeited");
 								setWarStatus(enemyF, "forfeited");
+								setWarEngaged(f, false);
+								setWarEngaged(enemyF, false);
+								setWarForfeitedBy(f, f);
+								setWarForfeitedBy(enemyF, f);
 								s.sendMessage("§eYou §chave §4forfeited §cthe war against " + enemyF.getColorTo(f) + enemyF.getName() + "§c!");
 								f.sendMessage("§cYour clan has §4forfeited §cthe war against " + enemyF.getColorTo(f) + enemyF.getName() + "§c!");
 								enemyF.sendMessage(f.getColorTo(enemyF) + f.getName() + " §ahas §cforfeited §athe war against your clan!");
+								for (Player p : Bukkit.getOnlinePlayers()) {
+									p.sendMessage("§6[§cWAR§6] " + f.getColorTo((MPlayer)p) + f.getName() + " §7has §cFORFEITED §7the war against " + enemyF.getColorTo((MPlayer)p) + enemyF.getName() + "§7!");
+								}
 								plugin.saveFactionWarsFile();
 							} else { // War is not accepted or engaged and thus cannot be forfeited.
 								s.sendMessage("§cYou cannot forfeit a war that isn't active!");
@@ -96,6 +172,7 @@ public class CmdExecutor implements CommandExecutor {
 									setWarTarget(enemyF, enemyF);
 									setWarRequester(enemyF, f);
 									setWarStatus(enemyF, "pending");
+									setWarTimeOfDeclaration(f, Calendar.getInstance().getTimeInMillis());
 									s.sendMessage("§eYou §7have requested a war against " + enemyF.getColorTo(mP) + enemyF.getName() + "§7!");
 									f.sendMessage("§7Your clan has requested a war against " + enemyF.getColorTo(f) + enemyF.getName() + "§7!");
 									enemyF.sendMessage(f.getColorTo(enemyF) + f.getName() + " §7has requested a war against your clan!");
@@ -133,7 +210,6 @@ public class CmdExecutor implements CommandExecutor {
 								// The war request must still be pending in order to accept.
 								if (getWarStatus(f).equalsIgnoreCase("pending")) {
 									Faction enemyF = getWarRequester(f);
-									plugin.logger.info(enemyF.getName());
 									setWarStatus(f, "accepted");
 									setWarStatus(enemyF, "accepted");
 									s.sendMessage("§eYou §ahave §2accepted §athe war against " + enemyF.getColorTo(f) + enemyF.getName() + "§a!");
@@ -279,6 +355,17 @@ public class CmdExecutor implements CommandExecutor {
 		
 	}
 	
+	public String convertMillisToDate(long i) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(i);
+
+		int Year = calendar.get(Calendar.YEAR);
+		int Month = calendar.get(Calendar.MONTH);
+		int Day = calendar.get(Calendar.DAY_OF_MONTH);
+		
+		return (Day + "/" + Month + "/" + Year);
+	}
+	
 	public Faction getWarOpponent(Faction f) {
 		if (plugin.factionWars.getString(f.getName() + ".Target").equalsIgnoreCase(f.getName())) {
 			return FactionColl.get().getByName(plugin.factionWars.getString(f.getName() + ".Requester"));
@@ -313,6 +400,34 @@ public class CmdExecutor implements CommandExecutor {
 		} else {
 			return FactionColl.get().getByName(plugin.factionWars.getString(f.getName() + ".Requester"));
 		}
+	}
+	
+	public Faction getWarForfeiter(Faction f) {
+		if (plugin.factionWars.getString(f.getName() + ".ForfeitedBy").equalsIgnoreCase("none")) {
+			return null;
+		} else {
+			return FactionColl.get().getByName(plugin.factionWars.getString(f.getName() + ".ForfeitedBy"));
+		}
+	}
+	
+	public boolean getWarEngaged(Faction f) {
+		return plugin.factionWars.getBoolean(f.getName() + ".Engaged");
+	}
+	
+	public long getWarTimeOfDeclaration(Faction f) {
+		return plugin.factionWars.getLong(f.getName() + ".TimeOfDeclaration");
+	}
+	
+	public void setWarTimeOfDeclaration(Faction f, long t) {
+		plugin.factionWars.set(f.getName() + ".TimeOfDeclaration", t);
+	}
+	
+	public void setWarForfeitedBy(Faction f, Faction eF) {
+		plugin.factionWars.set(f.getName() + ".ForfeitedBy", eF.getName());
+	}
+	
+	public void setWarEngaged(Faction f, boolean b) {
+		plugin.factionWars.set(f.getName() + ".Engaged", b);
 	}
 	
 	public void setWarStatus(Faction f, String s) {
