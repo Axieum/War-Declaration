@@ -19,7 +19,7 @@ public class LoginListener implements Listener {
 	
 	@EventHandler
 	public void onPlayerLoginEvent(PlayerLoginEvent e) {
-		MPlayer p = (MPlayer)e.getPlayer();
+		MPlayer p = MPlayer.get(e.getPlayer());
 		Faction f = p.getFaction();
 		Faction req = getWarRequester(f);
 		Faction tar = getWarTarget(f);
@@ -83,7 +83,7 @@ public class LoginListener implements Listener {
 		int Month = calendar.get(Calendar.MONTH);
 		int Day = calendar.get(Calendar.DAY_OF_MONTH);
 		
-		return (Day + "/" + Month + "/" + Year);
+		return (Day+1 + "/" + Month+1 + "/" + Year);
 	}
 	
 	public Faction getWarOpponent(Faction f) {

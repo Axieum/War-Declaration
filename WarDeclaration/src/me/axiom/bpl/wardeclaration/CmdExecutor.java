@@ -69,7 +69,7 @@ public class CmdExecutor implements CommandExecutor {
 									setWarEngaged(f, true);
 									setWarEngaged(enemyF, true);
 									for (Player p : Bukkit.getOnlinePlayers()) {
-										p.sendMessage("§6[§cWAR§6] §7The war between " + getWarRequester(f).getColorTo((MPlayer)p) + getWarRequester(f).getName() + " §7and " + getWarTarget(f).getColorTo((MPlayer)p) + getWarTarget(f).getName() + " §7has been §3ENGAGED§7!");
+										p.sendMessage("§6[§cWAR§6] §7The war between " + getWarRequester(f).getColorTo(MPlayer.get(p)) + getWarRequester(f).getName() + " §7and " + getWarTarget(f).getColorTo(MPlayer.get(p)) + getWarTarget(f).getName() + " §7has been §3ENGAGED§7!");
 									}
 								} else {
 									f.sendMessage("§3Waiting for " + enemyF.getColorTo(f) + enemyF.getName() + " §3to also engage the war!");
@@ -138,7 +138,7 @@ public class CmdExecutor implements CommandExecutor {
 								f.sendMessage("§cYour clan has §4forfeited §cthe war against " + enemyF.getColorTo(f) + enemyF.getName() + "§c!");
 								enemyF.sendMessage(f.getColorTo(enemyF) + f.getName() + " §ahas §cforfeited §athe war against your clan!");
 								for (Player p : Bukkit.getOnlinePlayers()) {
-									p.sendMessage("§6[§cWAR§6] " + f.getColorTo((MPlayer)p) + f.getName() + " §7has §cFORFEITED §7the war against " + enemyF.getColorTo((MPlayer)p) + enemyF.getName() + "§7!");
+									p.sendMessage("§6[§cWAR§6] " + f.getColorTo(MPlayer.get(p)) + f.getName() + " §7has §cFORFEITED §7the war against " + enemyF.getColorTo(MPlayer.get(p)) + enemyF.getName() + "§7!");
 								}
 								plugin.saveFactionWarsFile();
 							} else { // War is not accepted or engaged and thus cannot be forfeited.
@@ -173,6 +173,8 @@ public class CmdExecutor implements CommandExecutor {
 									setWarRequester(enemyF, f);
 									setWarStatus(enemyF, "pending");
 									setWarTimeOfDeclaration(f, Calendar.getInstance().getTimeInMillis());
+									setWarForfeitedBy(f, null);
+									setWarForfeitedBy(enemyF, null);
 									s.sendMessage("§eYou §7have requested a war against " + enemyF.getColorTo(mP) + enemyF.getName() + "§7!");
 									f.sendMessage("§7Your clan has requested a war against " + enemyF.getColorTo(f) + enemyF.getName() + "§7!");
 									enemyF.sendMessage(f.getColorTo(enemyF) + f.getName() + " §7has requested a war against your clan!");
@@ -363,7 +365,7 @@ public class CmdExecutor implements CommandExecutor {
 		int Month = calendar.get(Calendar.MONTH);
 		int Day = calendar.get(Calendar.DAY_OF_MONTH);
 		
-		return (Day + "/" + Month + "/" + Year);
+		return (Day+1 + "/" + Month+1 + "/" + Year);
 	}
 	
 	public Faction getWarOpponent(Faction f) {
@@ -423,7 +425,11 @@ public class CmdExecutor implements CommandExecutor {
 	}
 	
 	public void setWarForfeitedBy(Faction f, Faction eF) {
-		plugin.factionWars.set(f.getName() + ".ForfeitedBy", eF.getName());
+		if (eF != null) {
+			plugin.factionWars.set(f.getName() + ".ForfeitedBy", eF.getName());
+		} else {
+			plugin.factionWars.set(f.getName() + ".ForfeitedBy", "null");
+		}
 	}
 	
 	public void setWarEngaged(Faction f, boolean b) {
