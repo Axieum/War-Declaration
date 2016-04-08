@@ -4,8 +4,7 @@ import java.util.Calendar;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerLoginEvent;
-
+import org.bukkit.event.player.PlayerJoinEvent;
 import com.massivecraft.factions.entity.Faction;
 import com.massivecraft.factions.entity.FactionColl;
 import com.massivecraft.factions.entity.MPlayer;
@@ -18,34 +17,44 @@ public class LoginListener implements Listener {
 	}
 	
 	@EventHandler
-	public void onPlayerLoginEvent(PlayerLoginEvent e) {
+	public void onPlayerJoinEvent(PlayerJoinEvent e) {
 		MPlayer p = MPlayer.get(e.getPlayer());
-		Faction f = p.getFaction();
-		Faction req = getWarRequester(f);
-		Faction tar = getWarTarget(f);
-		Faction opp = getWarOpponent(f);
-		String sta = statusToColour(getWarStatus(f));
 		
 		if (p.hasFaction()) {
-			if (getWarEngaged(f)) {
-				p.sendMessage("§6[§cWARS§6] §7Your war against " + opp.getColorTo(p) + opp.getName() + " §7is currently §3ENGAGED§7!");
-			} else if (hasWar(f)){
-				p.sendMessage(req.getColorTo(f) + req.getName() + " §7recently declared war against your clan! (§8" + convertMillisToDate(getWarTimeOfDeclaration(f)) + "§7)");
-				p.sendMessage("§7War status: " + sta + "§7.");
-			}
-			if (p == f.getLeader()) {
-				if (getWarStatus(f).equalsIgnoreCase("pending") && f == tar) {
-					p.sendMessage("§7To respond to the war against " + f.getColorTo(req) + req.getName() + " §7use §3'/war <accept/deny>'§7.");
-				} else if (getWarStatus(f).equalsIgnoreCase("accepted")) {
-					p.sendMessage("§e" + opp.getColorTo(f) + opp.getName() + " §ahas accepted the war against your clan!");
-				} else if (getWarStatus(f).equalsIgnoreCase("denied") && f == req) {
-					p.sendMessage("§e" + tar.getColorTo(f) + tar.getName() + " §chas §4denied §cthe war against your clan!");
-				} else if (getWarStatus(f).equalsIgnoreCase("denied") && f == tar) {
-					p.sendMessage("§cYour §eclan §chas §4denied §cthe war against " + tar.getColorTo(f) + tar.getName() + "§c!");
-				} else if (getWarStatus(f).equalsIgnoreCase("cancelled") && f == tar) {
-					p.sendMessage("§e" + req.getColorTo(f) + req.getName() + " §chas §4cancelled §cthe war against your clan!");
-				} else if (getWarStatus(f).equalsIgnoreCase("cancelled") && f == req) {
-					p.sendMessage("§cYour §eclan §chas §4cancelled §cthe war against " + tar.getColorTo(f) + tar.getName() + "§c!");
+		
+			Faction f = p.getFaction();	
+			Faction req = getWarRequester(f);
+			Faction tar = getWarTarget(f);
+			Faction opp = getWarOpponent(f);
+			String sta = statusToColour(getWarStatus(f));
+			
+			if (p.hasFaction()) {
+				if (getWarEngaged(f)) {
+					p.sendMessage("§6[§cWARS§6] §7Your war against " + opp.getColorTo(p) + opp.getName() + " §7is currently §3ENGAGED§7!");
+				} else if (hasWar(f)){
+					p.sendMessage(req.getColorTo(f) + req.getName() + " §7recently declared war against your clan! (§f" + convertMillisToDate(getWarTimeOfDeclaration(f)) + "§7)");
+					p.sendMessage("§7War status: " + sta + "§7.");
+				}
+				if (p == f.getLeader()) {
+					if (getWarStatus(f).equalsIgnoreCase("pending") && f == tar) {
+						p.sendMessage("§7To respond to the war against " + f.getColorTo(req) + req.getName() + " §7use §3'/war <accept/deny>'§7.");
+					} else if (getWarStatus(f).equalsIgnoreCase("accepted") && f == req) {
+						p.sendMessage("§e" + tar.getColorTo(f) + tar.getName() + " §ahas recently §2accepted §athe war against your clan!");
+					} else if (getWarStatus(f).equalsIgnoreCase("accepted") && f == tar) {
+						p.sendMessage("§eYour §aclan has recently §2accepted §athe war against " + req.getColorTo(f) + req.getName() + "§a!");
+					} else if (getWarStatus(f).equalsIgnoreCase("denied") && f == req) {
+						p.sendMessage("§e" + tar.getColorTo(f) + tar.getName() + " §chas recently §4denied §cthe war against your clan!");
+					} else if (getWarStatus(f).equalsIgnoreCase("denied") && f == tar) {
+						p.sendMessage("§cYour §eclan §chas recently §4denied §cthe war against " + tar.getColorTo(f) + tar.getName() + "§c!");
+					} else if (getWarStatus(f).equalsIgnoreCase("cancelled") && f == tar) {
+						p.sendMessage("§e" + req.getColorTo(f) + req.getName() + " §chas recently §4cancelled §cthe war against your clan!");
+					} else if (getWarStatus(f).equalsIgnoreCase("cancelled") && f == req) {
+						p.sendMessage("§eYour §cclan has recently §4cancelled §cthe war against " + tar.getColorTo(f) + tar.getName() + "§c!");
+					} else if (getWarStatus(f).equalsIgnoreCase("forfeited") && f.getName().equalsIgnoreCase(getWarForfeiter(f).getName())) {
+						p.sendMessage("§eYour §cclan has recently §4forfeited §cthe war against " + opp.getColorTo(f) + opp.getName() + "§c!");
+					} else if (getWarStatus(f).equalsIgnoreCase("forfeited") && opp.getName().equalsIgnoreCase(getWarForfeiter(f).getName())) {
+						p.sendMessage(opp.getColorTo(f) + opp.getName() + " §chas recently §4forfeited §cthe war against §eyour §cclan!");
+					}
 				}
 			}
 		}
@@ -80,10 +89,10 @@ public class LoginListener implements Listener {
 		calendar.setTimeInMillis(i);
 
 		int Year = calendar.get(Calendar.YEAR);
-		int Month = calendar.get(Calendar.MONTH);
+		int Month = calendar.get(Calendar.MONTH) + 1;
 		int Day = calendar.get(Calendar.DAY_OF_MONTH);
 		
-		return (Day+1 + "/" + Month+1 + "/" + Year);
+		return (Day + "/" + Month + "/" + Year);
 	}
 	
 	public Faction getWarOpponent(Faction f) {

@@ -99,7 +99,7 @@ public class CmdExecutor implements CommandExecutor {
 			if (args[0].equalsIgnoreCase("status")) {
 				if (mP.hasFaction()) {
 					s.sendMessage("§6-----§a§l" + f.getName() + " §c§lStatus§r§6-----");
-					if (hasWar(f)) {
+					if (hasStatusWar(f)) {
 						String status = getWarStatus(f);
 						Faction target = getWarTarget(f);
 						Faction requester = getWarRequester(f);
@@ -109,7 +109,9 @@ public class CmdExecutor implements CommandExecutor {
 						s.sendMessage("§7Targeted against " + target.getColorTo(f) + target.getName() + "§7.");
 						s.sendMessage("§7Time of declaration: §e" + timeOfDeclaration + "§7.");
 						s.sendMessage("§7Current status: " + statusToColour(status) + "§7.");
-						s.sendMessage("§7Forfeited by " + forfeiter.getColorTo(f) + forfeiter.getName() + "§7.");
+						if (forfeiter != null) {
+							s.sendMessage("§7Forfeited by " + forfeiter.getColorTo(f) + forfeiter.getName() + "§7.");
+						}
 					} else {
 						s.sendMessage("§cYour clan is not involved in any wars!");
 					}
@@ -173,6 +175,7 @@ public class CmdExecutor implements CommandExecutor {
 									setWarRequester(enemyF, f);
 									setWarStatus(enemyF, "pending");
 									setWarTimeOfDeclaration(f, Calendar.getInstance().getTimeInMillis());
+									setWarTimeOfDeclaration(enemyF, Calendar.getInstance().getTimeInMillis());
 									setWarForfeitedBy(f, null);
 									setWarForfeitedBy(enemyF, null);
 									s.sendMessage("§eYou §7have requested a war against " + enemyF.getColorTo(mP) + enemyF.getName() + "§7!");
@@ -362,10 +365,10 @@ public class CmdExecutor implements CommandExecutor {
 		calendar.setTimeInMillis(i);
 
 		int Year = calendar.get(Calendar.YEAR);
-		int Month = calendar.get(Calendar.MONTH);
+		int Month = calendar.get(Calendar.MONTH) + 1;
 		int Day = calendar.get(Calendar.DAY_OF_MONTH);
 		
-		return (Day+1 + "/" + Month+1 + "/" + Year);
+		return (Day + "/" + Month + "/" + Year);
 	}
 	
 	public Faction getWarOpponent(Faction f) {
@@ -377,7 +380,15 @@ public class CmdExecutor implements CommandExecutor {
 	}
 	
 	public boolean hasWar(Faction f) {
-		if (plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("available") || plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("denied") || plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("forfeited") || plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("cancelled")) {
+		if (plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("forfeited") || plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("available") || plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("denied") || plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("cancelled")) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
+	public boolean hasStatusWar(Faction f) {
+		if (plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("available")) {
 			return false;
 		} else {
 			return true;
@@ -428,7 +439,7 @@ public class CmdExecutor implements CommandExecutor {
 		if (eF != null) {
 			plugin.factionWars.set(f.getName() + ".ForfeitedBy", eF.getName());
 		} else {
-			plugin.factionWars.set(f.getName() + ".ForfeitedBy", "null");
+			plugin.factionWars.set(f.getName() + ".ForfeitedBy", "none");
 		}
 	}
 	
