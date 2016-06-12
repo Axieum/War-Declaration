@@ -18,6 +18,11 @@ public class LoginListener implements Listener {
 	
 	@EventHandler
 	public void onPlayerJoinEvent(PlayerJoinEvent e) {
+		
+		if (plugin.getPlayerStats(e.getPlayer()) == null) {
+			plugin.playerStats.add(new PlayerStats(e.getPlayer(), 0, 0));
+		}
+		
 		MPlayer p = MPlayer.get(e.getPlayer());
 		
 		if (p.hasFaction()) {

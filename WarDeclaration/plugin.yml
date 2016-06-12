@@ -1,6 +1,6 @@
 name: WarDeclaration
 author: _Axiom
-version: 1.0
+version: 1.2
 main: me.axiom.bpl.wardeclaration.WarDeclaration
 depend: [Factions]
 
