@@ -36,6 +36,8 @@ public class LoginListener implements Listener {
 			if (p.hasFaction()) {
 				if (getWarEngaged(f)) {
 					p.sendMessage("§6[§cWARS§6] §7Your war against " + opp.getColorTo(p) + opp.getName() + " §7is currently §3ENGAGED§7!");
+					// Create a PlayerStats record.
+					plugin.playerStats.add(new PlayerStats(p.getPlayer(), 0, 0));
 				} else if (hasWar(f)){
 					p.sendMessage(req.getColorTo(f) + req.getName() + " §7recently declared war against your clan! (§f" + convertMillisToDate(getWarTimeOfDeclaration(f)) + "§7)");
 					p.sendMessage("§7War status: " + sta + "§7.");

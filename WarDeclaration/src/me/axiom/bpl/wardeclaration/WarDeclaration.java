@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.logging.Logger;
 
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -25,6 +26,9 @@ public class WarDeclaration extends JavaPlugin {
 	
 	public File factionWarsLogFile = new File(getDataFolder() + "/FactionsWarLog.yml");
 	public YamlConfiguration factionWarLog = YamlConfiguration.loadConfiguration(factionWarsLogFile);
+	
+	public File playerStatsFile = new File(getDataFolder() + "/playerStats.yml");
+	public YamlConfiguration playerStatsLog = YamlConfiguration.loadConfiguration(playerStatsFile);
 	
 	// HashSet<PlayerStats information>
 	public HashSet<PlayerStats> playerStats = new HashSet<PlayerStats>();
@@ -61,11 +65,22 @@ public class WarDeclaration extends JavaPlugin {
 			}
         }
 		
+		if (!playerStatsFile.exists()) {
+			try {
+				logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] attempting to Player Stats log file.");
+				playerStatsFile.createNewFile();
+				logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] Player Stats log file has been successfully created.");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+        }
+		
 		getCommand("war").setExecutor(new CmdExecutor(this));
 		
 		getServer().getPluginManager().registerEvents(new LoginListener(this), this);
 		getServer().getPluginManager().registerEvents(new FactionNameChangeListener(this), this);
 		getServer().getPluginManager().registerEvents(new FactionCreationListener(this), this);
+		getServer().getPluginManager().registerEvents(new WarDeathListener(this), this);
 
 		initialiseFactionWarsFile();
 		initialiseEngagedWars();
@@ -79,6 +94,7 @@ public class WarDeclaration extends JavaPlugin {
 		
 		saveFactionWarsFile();
 		saveFactionWarsLogFile();
+		savePlayerStatsFile();
 		
 		logger.info("[" + pdf.getName() + " v" + pdf.getVersion() + "] has been disabled.");
 		
@@ -91,6 +107,22 @@ public class WarDeclaration extends JavaPlugin {
 			playerStats.add(pS);
 		}
 		
+		for (OfflinePlayer p : getServer().getOfflinePlayers()) {
+			PlayerStats pS = new PlayerStats((Player)p, 0, 0);
+			playerStats.add(pS);
+		}
+		
+		loadPlayerStatsData();
+		
+	}
+	
+	@SuppressWarnings("deprecation")
+	public void loadPlayerStatsData() {
+		
+		for (String playerName : playerStatsLog.getKeys(false)) {
+			PlayerStats pS = new PlayerStats(getServer().getPlayer(playerName), playerStatsLog.getInt(playerName + ".Kills"), playerStatsLog.getInt(playerName + ".Deaths"));
+			playerStats.add(pS);
+		}
 	}
 	
 	public PlayerStats getPlayerStats(Player p) {
@@ -102,12 +134,33 @@ public class WarDeclaration extends JavaPlugin {
 		return null;
 	}
 	
+	public void resetPlayerStatsForFaction(Faction f) {
+		// Ensure to only account for the online players.
+		// Note: Players who join the war late, will be controlled via the LoginListener.class
+		for (Player p : getServer().getOnlinePlayers()) {
+			MPlayer mP = MPlayer.get(p);
+			if (mP.getFaction() == f) {
+				PlayerStats pS = getPlayerStats(p);
+				pS.setDeaths(0);
+				pS.setKills(0);
+			}
+		}
+		
+		// Ignore those who are in the faction, just not in the war.
+		for (OfflinePlayer p : getServer().getOfflinePlayers()) {
+			MPlayer mP = MPlayer.get((Player)p);
+			if (mP.getFaction() == f) {
+				playerStats.remove(getPlayerStats((Player)p));
+			}
+		}
+	}
+	
 	public void initialiseEngagedWars() {
 		
 		for (Faction f : FactionColl.get().getAll()) {
 			if (factionWars.contains(f.getName())) {
 				if (factionWars.getBoolean(f.getName() + ".Engaged")) {
-					
+					engagedWars.add(f);
 				}
 			}
 		}
@@ -117,7 +170,7 @@ public class WarDeclaration extends JavaPlugin {
 	public void initialiseFactionWarsFile() {
 		
 		for (Faction f : FactionColl.get().getAll()) {
-			if (!(factionWars.contains(f.getName())) && !(f.getName().equalsIgnoreCase("safezone")) && !(f.getName().equalsIgnoreCase("warzone")) && !(f.getName().equalsIgnoreCase(FactionColl.get().getByName("Wilderness").getName()))) {
+			if (!(factionWars.contains(f.getName())) && !(f.getName().equalsIgnoreCase("safezone")) && !(f.getName().equalsIgnoreCase("none")) && !(f.getName().equalsIgnoreCase("warzone")) && !(f.getName().equalsIgnoreCase(FactionColl.get().getByName("Wilderness").getName()))) {
 				factionWars.set(f.getName() + ".Target", "none");
 				factionWars.set(f.getName() + ".Requester", "none");
 				factionWars.set(f.getName() + ".Status", "available");
@@ -137,6 +190,7 @@ public class WarDeclaration extends JavaPlugin {
 		factionWarLog.set(String.valueOf(newKey) + ".Requester", getWarRequester(winFaction).getName());
 		factionWarLog.set(String.valueOf(newKey) + ".Target", getWarTarget(winFaction).getName());
 		factionWarLog.set(String.valueOf(newKey) + ".TimeOfDeclaration", factionWars.getLong(winFaction.getName() + ".TimeOfDeclaration"));
+		factionWarLog.set(String.valueOf(newKey) + ".TimeOfEngage", factionWars.getLong(winFaction.getName() + ".TimeOfEngage"));
 		factionWarLog.set(String.valueOf(newKey) + ".TimeOfEnd", System.currentTimeMillis());
 		factionWarLog.set(String.valueOf(newKey) + ".Victory", winFaction.getName());
 		factionWarLog.set(String.valueOf(newKey) + ".Defeat", loseFaction.getName());
@@ -161,18 +215,21 @@ public class WarDeclaration extends JavaPlugin {
 					loseFactionTotalKills = loseFactionTotalKills + pS.getKills();
 					loseFactionTotalDeaths = loseFactionTotalDeaths + pS.getDeaths();
 				}
+				playerStats.remove(pS);
 			}
 		}
 		
 		factionWarLog.set(String.valueOf(newKey) + ".VictoryKills", winFactionTotalKills);
 		factionWarLog.set(String.valueOf(newKey) + ".VictoryDeaths", winFactionTotalDeaths);
 		factionWarLog.set(String.valueOf(newKey) + ".DefeatKills", loseFactionTotalKills);
-		factionWarLog.set(String.valueOf(newKey) + ".DefeatKills", loseFactionTotalKills);
+		factionWarLog.set(String.valueOf(newKey) + ".DefeatDeaths", loseFactionTotalDeaths);
+		
+		saveFactionWarsLogFile();
 		
 	}
 	
 	public int getMaxKey(YamlConfiguration yml) {
-		int maxKey = Integer.MAX_VALUE;
+		int maxKey = 0;
 		for (String s : yml.getKeys(false)) {
 			int number = Integer.parseInt(s);
 			if (number > maxKey) {
@@ -184,7 +241,7 @@ public class WarDeclaration extends JavaPlugin {
 	
 	public void saveFactionWarsLogFile() {
 		try {
-			factionWarLog.save(factionWarsFile);
+			factionWarLog.save(factionWarsLogFile);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -193,6 +250,22 @@ public class WarDeclaration extends JavaPlugin {
 	public void saveFactionWarsFile() {
 		try {
 			factionWars.save(factionWarsFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void savePlayerStatsFile() {
+		
+		for (PlayerStats pS : playerStats) {
+		
+			playerStatsLog.set(pS.getPlayer().getName() + ".Kills", pS.getKills());
+			playerStatsLog.set(pS.getPlayer().getName() + ".Deaths", pS.getDeaths());
+			
+		}
+			
+		try {
+			playerStatsLog.save(playerStatsFile);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
