@@ -81,6 +81,7 @@ public class WarDeclaration extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(new FactionNameChangeListener(this), this);
 		getServer().getPluginManager().registerEvents(new FactionCreationListener(this), this);
 		getServer().getPluginManager().registerEvents(new WarDeathListener(this), this);
+		getServer().getPluginManager().registerEvents(new TerrainListener(this), this);
 
 		initialiseFactionWarsFile();
 		initialiseEngagedWars();
