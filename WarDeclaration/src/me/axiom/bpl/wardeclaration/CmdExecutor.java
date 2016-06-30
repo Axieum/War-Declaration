@@ -25,6 +25,8 @@ public class CmdExecutor implements CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender s, Command cmd, String label, String[] args) {
 		
+		boolean cmdSuccess = false;
+		
 		MPlayer mP = null;
 		Faction f = null;
 		
@@ -36,29 +38,37 @@ public class CmdExecutor implements CommandExecutor {
 		}
 		
 		// COMMAND MENU
-		if (args.length == 0) {
+		if (args.length == 0 || args.length >= 1) {
 			if (s instanceof Player) { // Check if they're in-game or in console.
-				s.sendMessage("§6---------§c§lClan Wars§r§6---------");
-				s.sendMessage("§8/war §7§ldeclare <enemy_clan>");
-				s.sendMessage("§8/war §7§lcancel");
-				s.sendMessage("§8/war §7§lforfeit");
-				s.sendMessage("§8/war §7§lend <victorious_clan>");
-				s.sendMessage("§8/war §7§laccept/deny");
-				s.sendMessage("§8/war §7§lupcoming");
-				s.sendMessage("§8/war §7§lstatus");
-				s.sendMessage("§8/war §7§lengage");
-				s.sendMessage("§8/war §7§llookup <id/clan>");
-				s.sendMessage("§6---------------------------");
+				if (args[0].equalsIgnoreCase("help") || args[0].equalsIgnoreCase("?") || args.length == 0) {
+					s.sendMessage("§6---------§c§lClan Wars§r§6---------");
+					s.sendMessage("§8/war §7§ldeclare <enemy_clan>");
+					s.sendMessage("§8/war §7§lcancel");
+					s.sendMessage("§8/war §7§lforfeit");
+					s.sendMessage("§8/war §7§lend <victorious_clan>");
+					s.sendMessage("§8/war §7§laccept/deny");
+					s.sendMessage("§8/war §7§lupcoming");
+					s.sendMessage("§8/war §7§lstatus");
+					s.sendMessage("§8/war §7§lengage");
+					s.sendMessage("§8/war §7§llookup <id/clan>");
+					s.sendMessage("§6---------------------------");
+					cmdSuccess = true;
+				}
 			} else {
-				s.sendMessage("§6---------§c§lClan Wars§r§6---------");
-				s.sendMessage("§8/war §7§lupcoming");
-				s.sendMessage("§6---------------------------");
+				if (args[0].equalsIgnoreCase("help") || args[0].equalsIgnoreCase("?") || args.length == 0) {
+					s.sendMessage("§6---------§c§lClan Wars§r§6---------");
+					s.sendMessage("§8/war §7§lupcoming");
+					s.sendMessage("§8/war §7§llookkup <id/clan>");
+					s.sendMessage("§6---------------------------");
+					cmdSuccess = true;
+				}
 			}
 		}
 		
 		// ENGAGE
-		if (args.length == 1) {
+		if (args.length >= 1) {
 			if (args[0].equalsIgnoreCase("engage")) {
+				cmdSuccess = true;
 				if (mP.hasFaction()) {
 					if (mP == f.getLeader()) {
 						if (hasWar(f)) {
@@ -104,8 +114,9 @@ public class CmdExecutor implements CommandExecutor {
 		}
 		
 		// STATUS
-		if (args.length == 1) {
+		if (args.length >= 1) {
 			if (args[0].equalsIgnoreCase("status")) {
+				cmdSuccess = true;
 				if (mP.hasFaction()) {
 					s.sendMessage("§6-----§a§l" + f.getName() + " §c§lStatus§r§6-----");
 					if (hasStatusWar(f)) {
@@ -127,8 +138,9 @@ public class CmdExecutor implements CommandExecutor {
 		}
 		
 		// FORFEIT
-		if (args.length == 1) {
+		if (args.length >= 1) {
 			if (args[0].equalsIgnoreCase("forfeit")) {
+				cmdSuccess = true;
 				if (mP.hasFaction()) {
 					if (mP == f.getLeader()) {
 						if (hasWar(f)) {
@@ -165,8 +177,9 @@ public class CmdExecutor implements CommandExecutor {
 		}
 		
 		// LOOKUP <id/clan>
-		if (args.length == 2) {
+		if (args.length >= 2) {
 			if (args[0].equalsIgnoreCase("lookup")) {
+				cmdSuccess = true;
 				
 				boolean valid = true;
 				
@@ -280,8 +293,9 @@ public class CmdExecutor implements CommandExecutor {
 		}
 		
 		// END WAR
-		if (args.length == 2) {
+		if (args.length >= 2) {
 			if (args[0].equalsIgnoreCase("end")) {
+				cmdSuccess = true;
 				if (mP.hasFaction()) {
 					if (mP == f.getLeader()) {
 						if (hasWar(f)) {
@@ -340,8 +354,9 @@ public class CmdExecutor implements CommandExecutor {
 		}
 		
 		// DECLARE
-		if (args.length == 2) {
+		if (args.length >= 2) {
 			if (args[0].equalsIgnoreCase("declare")) {
+				cmdSuccess = true;
 				if (mP.hasFaction()) {
 					if (mP == f.getLeader()) {
 						if (!f.getName().equalsIgnoreCase(args[1])) {
@@ -387,8 +402,9 @@ public class CmdExecutor implements CommandExecutor {
 		}
 		
 		// ACCEPT
-		if (args.length == 1) {
+		if (args.length >= 1) {
 			if (args[0].equalsIgnoreCase("accept")) {
+				cmdSuccess = true;
 				if (mP.hasFaction()) {
 					if (mP == f.getLeader()) {
 						if (hasWar(f)) {
@@ -422,8 +438,9 @@ public class CmdExecutor implements CommandExecutor {
 		}
 			
 		// DENY
-		if (args.length == 1) {
+		if (args.length >= 1) {
 			if (args[0].equalsIgnoreCase("deny")) {
+				cmdSuccess = true;
 				if (mP.hasFaction()) {
 					if (mP == f.getLeader()) {
 						if (hasWar(f)) {
@@ -458,8 +475,9 @@ public class CmdExecutor implements CommandExecutor {
 		}
 		
 		// CANCEL
-		if (args.length == 1) {
+		if (args.length >= 1) {
 			if (args[0].equalsIgnoreCase("cancel")) {
+				cmdSuccess = true;
 				if (mP.hasFaction()) {
 					if (mP == f.getLeader()) {
 						if (hasWar(f)) { 
@@ -495,8 +513,9 @@ public class CmdExecutor implements CommandExecutor {
 		}
 		
 		// UPCOMING
-		if (args.length == 1) {
+		if (args.length >= 1) {
 			if (args[0].equalsIgnoreCase("upcoming")) {
+				cmdSuccess = true;
 				s.sendMessage("§6------------§c§lWars Upcoming§r§6------------");
 				HashSet<String> factionsProcessed = new HashSet<String>();
 				for (Faction fa : FactionColl.get().getAll()) {
@@ -511,6 +530,10 @@ public class CmdExecutor implements CommandExecutor {
 					}
 				}
 			}
+		}
+		
+		if (!cmdSuccess) {
+			s.sendMessage("§6[§cWAR§6] §cInvalid command/arguments. Type, '§7/clan [? | help]§c'.");;
 		}
 		
 		return false;
@@ -579,10 +602,11 @@ public class CmdExecutor implements CommandExecutor {
 	}
 	
 	public boolean hasStatusWar(Faction f) {
-		if (plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("available")) {
-			return false;
-		} else {
+		String status = plugin.factionWars.getString(f.getName() + ".Status");
+		if (status.equalsIgnoreCase("pending") || status.equalsIgnoreCase("engaged") || status.equalsIgnoreCase("accepted")) {
 			return true;
+		} else {
+			return false;
 		}
 	}
 	
