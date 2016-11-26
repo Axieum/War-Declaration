@@ -111,7 +111,6 @@ public class WarDeclaration extends JavaPlugin {
 		
 	}
 	
-	@SuppressWarnings("deprecation")
 	public void loadPlayerStatsData() {
 		
 		for (String playerName : playerStatsLog.getKeys(false)) {

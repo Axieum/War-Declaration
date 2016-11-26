@@ -323,8 +323,8 @@ public class CmdExecutor implements CommandExecutor {
 										} else {
 											s.sendMessage("§cThe clan you specified does not match the victorious clan specified by §e" + getWarOpponent(f).getName() + "!");
 											s.sendMessage("§cPlease come to an agreement as to who won!");
-											getWarOpponent(f).getLeader().sendMessage("§e" + f.getName() + " §cdid not match the victorious clan specified by you.");
-											getWarOpponent(f).getLeader().sendMessage("§cPlease come to an agreement as to who won!");
+											getWarOpponent(f).getLeader().getPlayer().sendMessage("§e" + f.getName() + " §cdid not match the victorious clan specified by you.");
+											getWarOpponent(f).getLeader().getPlayer().sendMessage("§cPlease come to an agreement as to who won!");
 											plugin.factionVictoryDecider.remove(getWarOpponent(f));
 										}
 									} else { // The faction decided to win is NOT in the war.
@@ -337,7 +337,7 @@ public class CmdExecutor implements CommandExecutor {
 							} else {
 								// They're the first to decide, so also notify the other clan to request an end too.
 								plugin.factionVictoryDecider.put(f, FactionColl.get().getByName(args[1]));
-								getWarOpponent(f).getLeader().sendMessage(f.getColorTo(getWarOpponent(f)) + f.getName() + " §7has request to end the war with §e" + FactionColl.get().getByName(args[1]).getName() + " §7being victorious!");
+								getWarOpponent(f).getLeader().getPlayer().sendMessage(f.getColorTo(getWarOpponent(f)) + f.getName() + " §7has request to end the war with §e" + FactionColl.get().getByName(args[1]).getName() + " §7being victorious!");
 								s.sendMessage("§eYou §ahave request to end the war with §e" + FactionColl.get().getByName(args[1]).getName() + " §abeing victorious!");
 								
 							}
@@ -374,7 +374,7 @@ public class CmdExecutor implements CommandExecutor {
 									s.sendMessage("§eYou §7have requested a war against " + enemyF.getColorTo(mP) + enemyF.getName() + "§7!");
 									f.sendMessage("§7Your clan has requested a war against " + enemyF.getColorTo(f) + enemyF.getName() + "§7!");
 									enemyF.sendMessage(f.getColorTo(enemyF) + f.getName() + " §7has requested a war against your clan!");
-									enemyF.getLeader().sendMessage("§7To respond to the war against " + f.getColorTo(enemyF) + f.getName() + " §7use §3'/war <accept/deny>'§7.");
+									enemyF.getLeader().getPlayer().sendMessage("§7To respond to the war against " + f.getColorTo(enemyF) + f.getName() + " §7use §3'/war <accept/deny>'§7.");
 									plugin.saveFactionWarsFile();
 									for (Player p : Bukkit.getOnlinePlayers()) {
 										p.sendMessage("§6[§cWAR§6] §e" + f.getName() + " §7has declared war against §e" + FactionColl.get().getByName(args[1]).getName() + "§7!");
