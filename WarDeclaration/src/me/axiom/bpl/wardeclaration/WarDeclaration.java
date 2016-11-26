@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.logging.Logger;
 
-import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -108,11 +107,6 @@ public class WarDeclaration extends JavaPlugin {
 			playerStats.add(pS);
 		}
 		
-		for (OfflinePlayer p : getServer().getOfflinePlayers()) {
-			PlayerStats pS = new PlayerStats((Player)p, 0, 0);
-			playerStats.add(pS);
-		}
-		
 		loadPlayerStatsData();
 		
 	}
@@ -144,14 +138,6 @@ public class WarDeclaration extends JavaPlugin {
 				PlayerStats pS = getPlayerStats(p);
 				pS.setDeaths(0);
 				pS.setKills(0);
-			}
-		}
-		
-		// Ignore those who are in the faction, just not in the war.
-		for (OfflinePlayer p : getServer().getOfflinePlayers()) {
-			MPlayer mP = MPlayer.get((Player)p);
-			if (mP.getFaction() == f) {
-				playerStats.remove(getPlayerStats((Player)p));
 			}
 		}
 	}

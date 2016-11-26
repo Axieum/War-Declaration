@@ -37,7 +37,7 @@ public class TerrainListener implements Listener {
 					delay += 5;
 				}
 				
-				Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+				Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                     public void run() {
                             bs.update(true, false);
                     }
