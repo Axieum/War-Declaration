@@ -1,0 +1,11 @@
+name: WarDeclaration
+author: _Axiom
+version: 1.3
+main: me.axiom.bpl.wardeclaration.WarDeclaration
+depend: [Factions]
+
+commands:
+    war:
+        description: Base command for wars.
+        permission: wardeclaration.use
+        aliases: [wars]
