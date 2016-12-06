@@ -1,0 +1,10 @@
+name: RestartScheduler
+author: _Axiom
+version: 1.0
+main: me.axiom.bpl.restartscheduler.RestartScheduler
+
+commands:
+    restartscheduler:
+        description: Schedule a new restart time.
+        permission: restartscheduler.use
+        aliases: [restarts,rsched,rscheduler,rschedule,restartschedule]
