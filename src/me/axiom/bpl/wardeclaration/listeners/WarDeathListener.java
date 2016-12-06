@@ -1,4 +1,4 @@
-package me.axiom.bpl.wardeclaration;
+package me.axiom.bpl.wardeclaration.listeners;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -12,6 +12,9 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import com.massivecraft.factions.entity.Faction;
 import com.massivecraft.factions.entity.FactionColl;
 import com.massivecraft.factions.entity.MPlayer;
+
+import me.axiom.bpl.wardeclaration.PlayerStats;
+import me.axiom.bpl.wardeclaration.WarDeclaration;
 
 public class WarDeathListener implements Listener {
 

@@ -1,4 +1,4 @@
-package me.axiom.bpl.wardeclaration;
+package me.axiom.bpl.wardeclaration.listeners;
 
 import java.util.Calendar;
 
@@ -8,6 +8,9 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import com.massivecraft.factions.entity.Faction;
 import com.massivecraft.factions.entity.FactionColl;
 import com.massivecraft.factions.entity.MPlayer;
+
+import me.axiom.bpl.wardeclaration.PlayerStats;
+import me.axiom.bpl.wardeclaration.WarDeclaration;
 
 public class LoginListener implements Listener {
 

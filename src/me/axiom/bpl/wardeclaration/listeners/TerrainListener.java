@@ -1,4 +1,4 @@
-package me.axiom.bpl.wardeclaration;
+package me.axiom.bpl.wardeclaration.listeners;
 
 import java.util.List;
 
@@ -17,10 +17,12 @@ import com.massivecraft.factions.entity.BoardColl;
 import com.massivecraft.factions.entity.MPlayer;
 import com.massivecraft.massivecore.ps.PS;
 
+import me.axiom.bpl.wardeclaration.WarDeclaration;
+
 public class TerrainListener implements Listener {
 
 	WarDeclaration plugin;
-	TerrainListener(WarDeclaration instance) {
+	public TerrainListener(WarDeclaration instance) {
 		this.plugin = instance;
 	}
 	

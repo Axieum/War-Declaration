@@ -1,9 +1,11 @@
-package me.axiom.bpl.wardeclaration;
+package me.axiom.bpl.wardeclaration.listeners;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import com.massivecraft.factions.event.EventFactionsCreate;
+
+import me.axiom.bpl.wardeclaration.WarDeclaration;
 
 public class FactionCreationListener implements Listener {
 

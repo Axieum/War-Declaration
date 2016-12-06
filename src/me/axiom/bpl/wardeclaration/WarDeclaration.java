@@ -25,9 +25,15 @@ import com.massivecraft.factions.entity.FactionColl;
 import com.massivecraft.factions.entity.MPlayer;
 import com.massivecraft.massivecore.ps.PS;
 
+import me.axiom.bpl.wardeclaration.listeners.FactionCreationListener;
+import me.axiom.bpl.wardeclaration.listeners.FactionNameChangeListener;
+import me.axiom.bpl.wardeclaration.listeners.LoginListener;
+import me.axiom.bpl.wardeclaration.listeners.TerrainListener;
+import me.axiom.bpl.wardeclaration.listeners.WarDeathListener;
+
 public class WarDeclaration extends JavaPlugin {
 	
-	Logger logger = Logger.getLogger("minecraft");
+	public Logger logger = Logger.getLogger("minecraft");
 	PluginDescriptionFile pdf = this.getDescription();
 	
 	public File factionWarsFile = new File(getDataFolder() + "/FactionWars.yml");
