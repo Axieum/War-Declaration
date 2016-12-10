@@ -164,7 +164,7 @@ public class WarDeclaration extends JavaPlugin {
 						long timeNow = System.currentTimeMillis();
 						double secsSinceEnd = (timeNow - timeWarEnd) / 1000;
 						
-						if (secsSinceEnd > 900) {
+						if (secsSinceEnd > 900) { // 900 seconds = 15 minutes.
 							logger.info("[WarDeclaration] The war with ID '" + warId + "', is being regenerated back.");
 							revertWarDamage(factionWarLog.getString(warId + ".Target"), warId);
 						}
@@ -180,6 +180,9 @@ public class WarDeclaration extends JavaPlugin {
 		// Grab all keys relating to that war and randomly regenerate the blocks back!
 		ConfigurationSection sectionFaction = savedBlocksLog.getConfigurationSection(faction);
 		if (sectionFaction == null) { // Nothing to regenerate back.
+			savedBlocksLog.set(faction, null);
+			factionWarLog.set(warId + ".Regenerated", true);
+			saveFactionWarsLogFile();
 			saveSavedBlocksFile();
 			return;
 		}
@@ -344,6 +347,8 @@ public class WarDeclaration extends JavaPlugin {
 				factionWars.set(f.getName() + ".Engaged", false);
 				factionWars.set(f.getName() + ".ForfeitedBy", "none");
 				factionWars.set(f.getName() + ".TimeOfDeclaration", 0);
+				factionWars.set(f.getName() + ".TimeOfEngage", 0);
+				factionWars.set(f.getName() + ".TimeOfEnd", 0);
 			}
 		}
 		
