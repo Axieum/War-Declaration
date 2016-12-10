@@ -264,7 +264,7 @@ public class WarDeclaration extends JavaPlugin {
 		for (OfflinePlayer p : getServer().getOfflinePlayers()) { // Load offline players.
 			if (MPlayer.get(p.getUniqueId()).hasFaction()) {
 				if (getPlayerStats(p.getUniqueId()) == null) { // They're not loaded yet.
-					if (factionWars.getBoolean(MPlayer.get(p).getFaction().getName() + ".Engaged")) { // We only need to load them if they're engaged.
+					if (factionWars.getBoolean(MPlayer.get(p.getUniqueId()).getFaction().getName() + ".Engaged")) { // We only need to load them if they're engaged.
 						String playerName = p.getName();
 						PlayerStats pS;
 						if (playerStatsLog.getKeys(false).contains(p.getUniqueId().toString())) { // Try to load their saved stats.
