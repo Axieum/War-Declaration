@@ -55,10 +55,27 @@ public class LoginListener implements Listener {
 			if (p.hasFaction()) {
 				if (getWarEngaged(f)) {
 					p.getPlayer().sendMessage("§6[§cWARS§6] §7Your war against " + opp.getColorTo(p) + opp.getName() + " §7is currently §3ENGAGED§7!");
-					// TODO: Check if it's their first time joining the war; if so, reset their stats.
 				} else if (hasWar(f)){
-					p.getPlayer().sendMessage(req.getColorTo(f) + req.getName() + " §7recently declared war against your clan! (§f" + convertMillisToDate(getWarTimeOfDeclaration(f)) + "§7)");
+					long secondsSinceDeclaration = getWarTimeOfDeclaration(f);
+							
+					// Declaration message.
+					if (secondsSinceDeclaration > 86400) { // 86400secs = 24 hours.
+						if (req == f) {
+							p.getPlayer().sendMessage("§6[§cWAR§6] §r" + "§eYour §7clan recently declared war against §c" + tar.getColorTo(f) + tar.getName() + "§7! (§f" + convertMillisToDate(getWarTimeOfDeclaration(f)) + "§7");
+						} else {
+							p.getPlayer().sendMessage("§6[§cWAR§6] §r" + req.getColorTo(f) + req.getName() + " §7recently declared war against your clan! (§f" + convertMillisToDate(getWarTimeOfDeclaration(f)) + "§7)");
+						}
+					}
+
 					p.getPlayer().sendMessage("§7War status: " + sta + "§7.");
+				} else {
+					long timeEnd = getWarTimeOfEnd(f);
+					long timeNow = System.currentTimeMillis();
+					double secsSinceEnd = (timeNow - timeEnd) / 1000;
+					// End message.
+					if (secsSinceEnd > 86400 && secsSinceEnd != 0) { // 86400secs = 24 hours.
+						p.getPlayer().sendMessage("§6[§cWAR§6] §r" + "§eYour §7war against §c" + opp.getColorTo(f) + opp.getName() + " §7recently finished! (§f/war lookup " + f.getName() + "§7).");
+					}
 				}
 				if (p == f.getLeader()) {
 					if (getWarStatus(f).equalsIgnoreCase("pending") && f == tar) {
@@ -200,6 +217,14 @@ public class LoginListener implements Listener {
 	
 	public long getWarTimeOfDeclaration(Faction f) {
 		return plugin.factionWars.getLong(f.getName() + ".TimeOfDeclaration");
+	}
+	
+	public long getWarTimeOfEngage(Faction f) {
+		return plugin.factionWars.getLong(f.getName() + ".TimeOfEngage");
+	}
+	
+	public long getWarTimeOfEnd(Faction f) {
+		return plugin.factionWars.getLong(f.getName() + ".TimeOfEnd");
 	}
 	
 }
