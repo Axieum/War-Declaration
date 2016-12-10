@@ -69,7 +69,7 @@ public class LoginListener implements Listener {
 					}
 
 					p.getPlayer().sendMessage("§7War status: " + sta + "§7.");
-				} else {
+				} else if (getWarTimeOfEnd(f) > 0) {
 					long timeEnd = getWarTimeOfEnd(f);
 					long timeNow = System.currentTimeMillis();
 					double secsSinceEnd = (timeNow - timeEnd) / 1000;
