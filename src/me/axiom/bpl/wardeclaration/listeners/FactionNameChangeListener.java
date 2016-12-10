@@ -17,6 +17,12 @@ public class FactionNameChangeListener implements Listener {
 	
 	@EventHandler
 	public void onFactionNameChange(EventFactionsNameChange e) {
+		
+		if (e.isCancelled()) {
+			return;
+		}
+		
+		plugin.logger.info("Faction name change detected! Updating data...");
 		Faction f = e.getFaction();
 		String newName = e.getNewName();
 		String oldName = f.getName();
@@ -24,6 +30,7 @@ public class FactionNameChangeListener implements Listener {
 		plugin.factionWars.set(newName, plugin.factionWars.get(oldName));
 		plugin.factionWars.set(oldName, null);
 		plugin.saveFactionWarsFile();
+		plugin.logger.info("Faction data has been successfully updated!");
 	}
 	
 }
