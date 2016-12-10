@@ -1,5 +1,7 @@
 package me.axiom.bpl.wardeclaration;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.Calendar;
 import java.util.HashSet;
 import org.bukkit.Bukkit;
@@ -46,17 +48,22 @@ public class CmdExecutor implements CommandExecutor {
 				s.sendMessage("§8/war §7§lend <victorious_clan>");
 				s.sendMessage("§8/war §7§laccept/deny");
 				s.sendMessage("§8/war §7§lupcoming");
-				s.sendMessage("§8/war §7§lstatus");
+				s.sendMessage("§8/war §7§lstatus [clan]");
 				s.sendMessage("§8/war §7§lengage");
+				s.sendMessage("§8/war §7§lstats [clan]");
 				s.sendMessage("§8/war §7§llookup <id/clan>");
 				s.sendMessage("§6---------------------------");
 				cmdSuccess = true;
+				return true;
 			} else {
 				s.sendMessage("§6---------§c§lClan Wars§r§6---------");
+				s.sendMessage("§8/war §7§lstatus [clan]");
 				s.sendMessage("§8/war §7§lupcoming");
+				s.sendMessage("§8/war §7§lstats [clan]");
 				s.sendMessage("§8/war §7§llookup <id/clan>");
 				s.sendMessage("§6---------------------------");
 				cmdSuccess = true;
+				return true;
 			}
 		}
 		
@@ -73,26 +80,175 @@ public class CmdExecutor implements CommandExecutor {
 					s.sendMessage("§8/war §7§lupcoming");
 					s.sendMessage("§8/war §7§lstatus");
 					s.sendMessage("§8/war §7§lengage");
+					s.sendMessage("§8/war §7§lstats [clan]");
 					s.sendMessage("§8/war §7§llookup <id/clan>");
 					s.sendMessage("§6---------------------------");
 					cmdSuccess = true;
+					return true;
 				}
 			} else if (args[0].equalsIgnoreCase("help") || args[0].equalsIgnoreCase("?") || args.length == 0) {
 					s.sendMessage("§6---------§c§lClan Wars§r§6---------");
 					s.sendMessage("§8/war §7§lupcoming");
+					s.sendMessage("§8/war §7§lstats [clan]");
 					s.sendMessage("§8/war §7§llookup <id/clan>");
 					s.sendMessage("§6---------------------------");
 					cmdSuccess = true;
+					return true;
 			}
 		}
 		
 		if (!(s instanceof Player)) {
 			// They're in the console, hence they must only have typed the 'upcoming' and 'lookup' command.
 			if (args.length >= 1) {
-				if (!(args[0].equalsIgnoreCase("lookup") || args[0].equalsIgnoreCase("upcoming"))) {
+				if (!(args[0].equalsIgnoreCase("lookup") || args[0].equalsIgnoreCase("upcoming") || args[0].equalsIgnoreCase("status"))) {
 					// They typed a command only available in-game.
 					s.sendMessage("§cUnfortunately, you must be in-game to use other commands.");
 					return true;
+				}
+			}
+		}
+		
+		// STATS [clan]
+		if (args.length >= 1) {
+			if (args[0].equalsIgnoreCase("stats")) {
+				cmdSuccess = true;
+				
+				// THEIR CLAN
+				if (args.length == 1) { // Attempt to retrieve their faction's current stats.
+					if (mP.hasFaction()) { // They must have a faction in order to show their stats.
+						// Are they currently engaged?
+						if (getWarEngaged(f)) {
+							
+							Faction enemyF = getWarOpponent(f);
+							
+							s.sendMessage("§6-----§a§l" + f.getName() + " §7vs. §c§l" + enemyF.getName() + " §c§lStats§r§6-----");
+							
+							// Send player stats.
+							PlayerStats pStats = plugin.getPlayerStats(mP.getUuid());
+							s.sendMessage("§7Your §lKills: §r§a" + pStats.getKills());
+							s.sendMessage("§7Your §lDeaths: §r§c" + pStats.getDeaths());
+							s.sendMessage("§7Your §lK/D: §r" + colorCodeKD(pStats.getKD()) + roundFloatTwo(pStats.getKD()) + "§7.");
+							
+							// Send overall faction stats.
+							s.sendMessage("§7---- §6§l" + f.getName() + "§7 ----");
+							int factionTotalKills = 0;
+							int factionTotalDeaths = 0;
+							int enemyFactionTotalKills = 0;
+							int enemyFactionTotalDeaths = 0;
+							
+							int fPlayersScanned = 0;
+							int fPlayersToScan = f.getMPlayers().size();
+							int eFPlayersScanned = 0;
+							int eFPlayersToScan = enemyF.getMPlayers().size();
+							
+							// Their FACTION Stats
+							for (MPlayer p : f.getMPlayers()) {
+								PlayerStats pS = plugin.getPlayerStats(p.getUuid());
+								factionTotalKills += pS.getKills();
+								factionTotalDeaths += pS.getDeaths();
+								s.sendMessage("§e" + p.getName() + " §8has §7" + pS.getKills() + " kills §8and §7" + pS.getDeaths() + " deaths §8with a K/D of " + colorCodeKD(pS.getKD()) + roundFloatTwo(pS.getKD()) + "§8.");
+								fPlayersScanned++;
+								if (fPlayersScanned >= fPlayersToScan) { // That's the last of this faction.
+									float fKD = (float)((float)factionTotalKills / (float)factionTotalDeaths);
+									if (factionTotalDeaths == 0) {
+										fKD = 0;
+									}
+									s.sendMessage(f.getColorTo(f) + f.getName() + " §8in total, has §a" + factionTotalKills + " §7kills §8and §c" + factionTotalDeaths + " §7deaths §8with a §7K/D §8of §r" + colorCodeKD(fKD) + roundFloatTwo(fKD) + "§7!");
+								}
+							}
+							
+							s.sendMessage("§7---- §6§l" + enemyF.getName() + "§7 ----");
+							
+							// Enemy's FACTION Stats.
+							for (MPlayer p : enemyF.getMPlayers()) {
+								PlayerStats pS = plugin.getPlayerStats(p.getUuid());
+								enemyFactionTotalKills += pS.getKills();
+								enemyFactionTotalDeaths += pS.getDeaths();
+								s.sendMessage("§e" + p.getName() + " §8has §7" + pS.getKills() + " kills §8and §7" + pS.getDeaths() + " deaths §8with a K/D of " + colorCodeKD(pS.getKD()) + roundFloatTwo(pS.getKD()) + "§8.");
+								eFPlayersScanned++;
+								if (eFPlayersScanned >= eFPlayersToScan) { // That's the last of this faction.
+									float eFKD = (float)((float)enemyFactionTotalKills / (float)enemyFactionTotalDeaths);
+									if (enemyFactionTotalDeaths == 0) {
+										eFKD = 0;
+									}
+									s.sendMessage(enemyF.getColorTo(f) + enemyF.getName() + " §8in total, has §a" + enemyFactionTotalKills + " §7kills §8and §c" + enemyFactionTotalDeaths + " §7deaths §8with a §7K/D §8of §r" + colorCodeKD(eFKD) + roundFloatTwo(eFKD) + "§7!");
+								}
+							}
+
+						} else {
+							s.sendMessage("§cYour clan is currently not engaged in a war!");
+						}
+					} else {
+						s.sendMessage("§cYou are not in a clan!");
+						s.sendMessage("§cInstead, you may specify a clan's stats. §3/war stats [clan]§c.");
+					}
+				}
+				
+				// OTHER CLAN
+				if (args.length > 1) { // Attempt to retrieve the specified clan's stats.
+					String factionName = args[1];
+					Faction fac = FactionColl.get().getByName(args[1]);
+					if (fac != null) { // Does the faction they specified exist?
+						// Are they currently engaged?
+						if (getWarEngaged(fac)) {
+							
+							Faction enemyF = getWarOpponent(fac);
+							
+							s.sendMessage("§6-----§a§l" + fac.getName() + " §7vs. §c§l" + enemyF.getName() + " §c§lStats§r§6-----");
+							
+							// Send overall faction stats.
+							s.sendMessage("§7---- §6§l" + fac.getName() + "§7 ----");
+							int factionTotalKills = 0;
+							int factionTotalDeaths = 0;
+							int enemyFactionTotalKills = 0;
+							int enemyFactionTotalDeaths = 0;
+							
+							int fPlayersScanned = 0;
+							int fPlayersToScan = fac.getMPlayers().size();
+							int eFPlayersScanned = 0;
+							int eFPlayersToScan = enemyF.getMPlayers().size();
+							
+							// Their FACTION Stats
+							for (MPlayer p : fac.getMPlayers()) {
+								PlayerStats pS = plugin.getPlayerStats(p.getUuid());
+								factionTotalKills += pS.getKills();
+								factionTotalDeaths += pS.getDeaths();
+								s.sendMessage("§e" + p.getName() + " §8has §7" + pS.getKills() + " kills §8and §7" + pS.getDeaths() + " deaths §8with a K/D of " + colorCodeKD(pS.getKD()) + roundFloatTwo(pS.getKD()) + "§8.");
+								fPlayersScanned++;
+								if (fPlayersScanned >= fPlayersToScan) { // That's the last of this faction.
+									float fKD = (float)((float)factionTotalKills / (float)factionTotalDeaths);
+									if (factionTotalDeaths == 0) {
+										fKD = 0;
+									}
+									s.sendMessage(fac.getColorTo(f) + fac.getName() + " §8in total, has §a" + factionTotalKills + " §7kills §8and §c" + factionTotalDeaths + " §7deaths §8with a §7K/D §8of §r" + colorCodeKD(fKD) + roundFloatTwo(fKD) + "§7!");
+								}
+							}
+							
+							s.sendMessage("§7---- §6§l" + enemyF.getName() + "§7 ----");
+							
+							// Enemy's FACTION Stats.
+							for (MPlayer p : enemyF.getMPlayers()) {
+								PlayerStats pS = plugin.getPlayerStats(p.getUuid());
+								enemyFactionTotalKills += pS.getKills();
+								enemyFactionTotalDeaths += pS.getDeaths();
+								s.sendMessage("§e" + p.getName() + " §8has §7" + pS.getKills() + " kills §8and §7" + pS.getDeaths() + " deaths §8with a K/D of " + colorCodeKD(pS.getKD()) + roundFloatTwo(pS.getKD()) + "§8.");
+								eFPlayersScanned++;
+								if (eFPlayersScanned >= eFPlayersToScan) { // That's the last of this faction.
+									float eFKD = (float)((float)enemyFactionTotalKills / (float)enemyFactionTotalDeaths);
+									if (enemyFactionTotalDeaths == 0) {
+										eFKD = 0;
+									}
+									s.sendMessage(enemyF.getColorTo(f) + f.getName() + " §8in total, has §a" + enemyFactionTotalKills + " §7kills §8and §c" + enemyFactionTotalDeaths + " §7deaths §8with a §7K/D §8of §r" + colorCodeKD(eFKD) + roundFloatTwo(eFKD) + "§7!");
+								}
+							}
+							
+							
+						} else {
+							s.sendMessage("§e" + fac.getName() + " §cis currently not engaged in a war!");
+						}
+					} else {
+						s.sendMessage("§e" + factionName + " §cdoes not exist!");
+					}
 				}
 			}
 		}
@@ -107,29 +263,37 @@ public class CmdExecutor implements CommandExecutor {
 							// The war request must be accepted in order to engage.
 							if (getWarStatus(f).equalsIgnoreCase("accepted")) {
 								Faction enemyF = getWarOpponent(f);
-								setWarStatus(f, "engaged");
+								plugin.engageConfirmation.add(f);
 								s.sendMessage("§eYou §ahave §2engaged §athe war against " + enemyF.getColorTo(f) + enemyF.getName() + "§a!");
 								f.sendMessage("§aYour clan has engaged the war against " + enemyF.getColorTo(f) + enemyF.getName() + "§a!");
-								if (getWarStatus(enemyF).equalsIgnoreCase("engaged")) {
+								if (plugin.engageConfirmation.contains(enemyF)) { // The enemy has already engaged their part of the war.
+									plugin.engageConfirmation.remove(f);
+									plugin.engageConfirmation.remove(enemyF);
 									enemyF.sendMessage("§e" + f.getColorTo(enemyF) + f.getName() + " §ahas §2engaged §athe war against your clan!");
 									setWarEngaged(f, true);
 									setWarEngaged(enemyF, true);
+									setWarStatus(f, "engaged");
+									setWarStatus(enemyF, "engaged");
+									plugin.initialisePlayerStats(); // Make sure we are loading the necessary players.
 									long currentTime = System.currentTimeMillis();
 									setWarTimeOfEngage(f, currentTime);
 									setWarTimeOfEngage(enemyF, currentTime);
 									plugin.resetPlayerStatsForFaction(f);
 									plugin.resetPlayerStatsForFaction(enemyF);
+									plugin.saveFactionWarsFile();
 									for (Player p : Bukkit.getOnlinePlayers()) {
 										p.sendMessage("§6[§cWAR§6] §7The war between " + getWarRequester(f).getColorTo(MPlayer.get(p)) + getWarRequester(f).getName() + " §7and " + getWarTarget(f).getColorTo(MPlayer.get(p)) + getWarTarget(f).getName() + " §7has §3BEGUN§7!");
 									}
 								} else {
 									f.sendMessage("§3Waiting for " + enemyF.getColorTo(f) + enemyF.getName() + " §3to also engage the war!");
 									enemyF.sendMessage("§e" + f.getColorTo(enemyF) + f.getName() + " §ahas §2engaged §athe war against your clan!");
-									enemyF.sendMessage("§3You must also engage the war against " + f.getColorTo(f) + f.getName() + "§3!");
+									enemyF.sendMessage("§3Your leader must also engage the war against " + f.getColorTo(f) + f.getName() + "§3!");
 								}
 								plugin.saveFactionWarsFile();
 							} else if (getWarEngaged(f)) {
 								s.sendMessage("§cYour war is already engaged!");
+							} else if (plugin.engageConfirmation.contains(f)) { // They've already requested to engage!
+								s.sendMessage("§cYou have already requested to engage the war! You must wait for the enemy to also engage.");
 							} else if (!getWarStatus(f).equalsIgnoreCase("engaged") || !getWarStatus(f).equalsIgnoreCase("accepted")) {
 								s.sendMessage("§cYou cannot engage a war that is not agreed upon! §7(" + statusToColour(getWarStatus(f)) + "§7)");
 							}
@@ -149,22 +313,39 @@ public class CmdExecutor implements CommandExecutor {
 		if (args.length >= 1) {
 			if (args[0].equalsIgnoreCase("status")) {
 				cmdSuccess = true;
-				if (mP.hasFaction()) {
-					s.sendMessage("§6-----§a§l" + f.getName() + " §c§lStatus§r§6-----");
-					if (hasStatusWar(f)) {
-						String status = getWarStatus(f);
-						Faction target = getWarTarget(f);
-						Faction requester = getWarRequester(f);
-						String timeOfDeclaration = convertMillisToDate(getWarTimeOfDeclaration(f));
+				Faction fac;
+				
+				// Do they want to see someone else's status, or their own clans?
+				if (args.length == 1) {
+					if (mP.hasFaction()) {
+						fac = f;
+					} else {
+						s.sendMessage("§cYou are not in a clan!");
+						return true;
+					}
+					
+				} else {
+					fac = FactionColl.get().getByName(args[1]);
+				}
+
+				if (fac != null) {
+					s.sendMessage("§6-----§a§l" + fac.getName() + " §c§lStatus§r§6-----");
+					if (hasStatusWar(fac)) {
+						String status = getWarStatus(fac);
+						Faction target = getWarTarget(fac);
+						Faction requester = getWarRequester(fac);
+						String timeOfDeclaration = convertMillisToDate(getWarTimeOfDeclaration(fac));
 						s.sendMessage("§7Declared by " + requester.getColorTo(f) + requester.getName() + "§7.");
 						s.sendMessage("§7Targeted against " + target.getColorTo(f) + target.getName() + "§7.");
 						s.sendMessage("§7Time of declaration: §e" + timeOfDeclaration + "§7.");
 						s.sendMessage("§7Current status: " + statusToColour(status) + "§7.");
-					} else {
+					} else if (fac == f) {
 						s.sendMessage("§cYour clan is not involved in any wars!");
+					} else {
+						s.sendMessage("§e" + fac.getName() + " §cis not involved in any wars!");
 					}
 				} else {
-					s.sendMessage("§cYou are not in a clan!");
+					s.sendMessage("§e" + args[1] + " §cdoes not exist!");
 				}
 			}
 		}
@@ -179,7 +360,7 @@ public class CmdExecutor implements CommandExecutor {
 							// The war request must be accepted or engaged in order to forfeit.
 							if (getWarStatus(f).equalsIgnoreCase("accepted") || getWarStatus(f).equalsIgnoreCase("engaged")) {
 								Faction enemyF = getWarOpponent(f);
-								plugin.addWarLog(enemyF, f, "forfeit");
+								plugin.addWarLog(enemyF, f, "forfeit"); // The opposite faction wins.
 								setWarStatus(f, "forfeited");
 								setWarStatus(enemyF, "forfeited");
 								setWarEngaged(f, false);
@@ -271,9 +452,9 @@ public class CmdExecutor implements CommandExecutor {
 						s.sendMessage(victory.getColorTo(f) + victory.getName() + " §7was §aVictorious§7!");
 						s.sendMessage(defeat.getColorTo(f) + defeat.getName() + " §7was §cDefeated§7.");
 						s.sendMessage(victory.getColorTo(f) + victory.getName() + " §7had §8" + victoryKills + " kills §7and §8" + victoryDeaths + " deaths§7.");
-						s.sendMessage(victory.getColorTo(f) + victory.getName() + " §7had a K/D Ratio of " + colorCodeKD(victoryKD) + victoryKD + "§7.");
+						s.sendMessage(victory.getColorTo(f) + victory.getName() + " §7had a K/D Ratio of " + colorCodeKD(victoryKD) + roundFloatTwo(victoryKD) + "§7.");
 						s.sendMessage(defeat.getColorTo(f) + defeat.getName() + " §7had §8" + defeatKills + " kills §7and §8" + defeatDeaths + " deaths§7.");
-						s.sendMessage(defeat.getColorTo(f) + defeat.getName() + " §7had a K/D Ratio of " + colorCodeKD(defeatKD) + defeatKD + "§7.");
+						s.sendMessage(defeat.getColorTo(f) + defeat.getName() + " §7had a K/D Ratio of " + colorCodeKD(defeatKD) + roundFloatTwo(defeatKD) + "§7.");
 						if (method.equalsIgnoreCase("forfeited")) {
 							s.sendMessage(defeat.getColorTo(f) + defeat.getName() + " §7had §cFORFEITED §7the war!");
 						}
@@ -297,7 +478,7 @@ public class CmdExecutor implements CommandExecutor {
 								if (!foundPlayer) {
 									if (p.getUniqueId().toString().equalsIgnoreCase(value)) {
 										playerName = p.getName();
-										s.sendMessage("§e" + playerName + " §8had §7" + kills + " kills §8and §7" + deaths + " deaths §8with a K/D of " + colorCodeKD(kd) + kd + "§8.");
+										s.sendMessage("§e" + playerName + " §8had §7" + kills + " kills §8and §7" + deaths + " deaths §8with a K/D of " + colorCodeKD(kd) + roundFloatTwo(kd) + "§8.");
 										foundPlayer = true;
 									}
 								}
@@ -306,7 +487,7 @@ public class CmdExecutor implements CommandExecutor {
 								if (!foundPlayer) {
 									if (p.getUniqueId().toString().equalsIgnoreCase(value)) {
 										playerName = p.getName();
-										s.sendMessage("§e" + playerName + " §8had §7" + kills + " kills §8and §7" + deaths + " deaths §8with a K/D of " + colorCodeKD(kd) + kd + "§8.");
+										s.sendMessage("§e" + playerName + " §8had §7" + kills + " kills §8and §7" + deaths + " deaths §8with a K/D of " + colorCodeKD(kd) + roundFloatTwo(kd) + "§8.");
 										foundPlayer = true;
 									}
 								}
@@ -332,7 +513,7 @@ public class CmdExecutor implements CommandExecutor {
 								if (!foundPlayer) {
 									if (p.getUniqueId().toString().equalsIgnoreCase(value)) {
 										playerName = p.getName();
-										s.sendMessage("§e" + playerName + " §8had §7" + kills + " kills §8and §7" + deaths + " deaths §8with a K/D of " + colorCodeKD(kd) + kd + "§8.");
+										s.sendMessage("§e" + playerName + " §8had §7" + kills + " kills §8and §7" + deaths + " deaths §8with a K/D of " + colorCodeKD(kd) + roundFloatTwo(kd) + "§8.");
 										foundPlayer = true;
 									}
 								}
@@ -341,7 +522,7 @@ public class CmdExecutor implements CommandExecutor {
 								if (!foundPlayer) {
 									if (p.getUniqueId().toString().equalsIgnoreCase(value)) {
 										playerName = p.getName();
-										s.sendMessage("§e" + playerName + " §8had §7" + kills + " kills §8and §7" + deaths + " deaths §8with a K/D of " + colorCodeKD(kd) + kd + "§8.");
+										s.sendMessage("§e" + playerName + " §8had §7" + kills + " kills §8and §7" + deaths + " deaths §8with a K/D of " + colorCodeKD(kd) + roundFloatTwo(kd) + "§8.");
 										foundPlayer = true;
 									}
 								}
@@ -370,19 +551,15 @@ public class CmdExecutor implements CommandExecutor {
 					if (mP == f.getLeader()) {
 						if (hasWar(f)) {
 							// The war must be engaged in order to end.
-							// The player requesting must be from the attacking clan.
-							if (plugin.factionVictoryDecider.containsKey(getWarOpponent(f))) { // The opponent has also request the end.
-								if (getWarStatus(f).equalsIgnoreCase("engaged")) {
+							if (getWarStatus(f).equalsIgnoreCase("engaged")) { // They must be engaged to proceed.
+								if (plugin.factionVictoryDecider.containsKey(getWarOpponent(f))) { // The opponent has also request the end.								
 									if (args[1].equalsIgnoreCase(getWarRequester(f).getName()) || args[1].equalsIgnoreCase(getWarTarget(f).getName())) {
 										if (plugin.factionVictoryDecider.get(getWarOpponent(f)).getName().equalsIgnoreCase(args[1])) {
 											// The victory clan specified matches both clans opinions.
 											Faction victory = FactionColl.get().getByName(args[1]);
 											Faction loss = getWarOpponent(victory);
-											plugin.addWarLog(victory, getWarOpponent(victory), "ended");
-											setWarTarget(f, null);
-											setWarTarget(loss, null);
-											setWarRequester(f, null);
-											setWarRequester(loss, null);
+											plugin.logger.info(loss.getName() + " was defeated by " + victory.getName());
+											plugin.addWarLog(victory, loss, "ended");
 											setWarStatus(f, "available");
 											setWarStatus(loss, "available");
 											setWarEngaged(f, false);
@@ -402,16 +579,18 @@ public class CmdExecutor implements CommandExecutor {
 									} else { // The faction decided to win is NOT in the war.
 										s.sendMessage("§cThe clan specified for victory is not in this war!");
 									}
-								} else { // War is not engaged and is accepted.
-									s.sendMessage("§cYou cannot end a war that isn't engaged!");
-									s.sendMessage("§cInstead, you must cancel/forfeit the war. §7/war cancel/forfeit§c.");
+								} else if (args[1].equalsIgnoreCase(getWarRequester(f).getName()) || args[1].equalsIgnoreCase(getWarTarget(f).getName())) {
+									// They're the first to decide, so also notify the other clan to request an end too.
+									plugin.factionVictoryDecider.put(f, FactionColl.get().getByName(args[1]));
+									getWarOpponent(f).getLeader().message(f.getColorTo(getWarOpponent(f)) + f.getName() + " §7has request to end the war with §e" + FactionColl.get().getByName(args[1]).getName() + " §7being victorious!");
+									s.sendMessage("§eYou §ahave request to end the war with §e" + FactionColl.get().getByName(args[1]).getName() + " §abeing victorious!");
+								} else {
+									// The faction decided to win is NOT in the war.
+									s.sendMessage("§cThe clan specified for victory is not in this war!");
 								}
-							} else {
-								// They're the first to decide, so also notify the other clan to request an end too.
-								plugin.factionVictoryDecider.put(f, FactionColl.get().getByName(args[1]));
-								getWarOpponent(f).getLeader().message(f.getColorTo(getWarOpponent(f)) + f.getName() + " §7has request to end the war with §e" + FactionColl.get().getByName(args[1]).getName() + " §7being victorious!");
-								s.sendMessage("§eYou §ahave request to end the war with §e" + FactionColl.get().getByName(args[1]).getName() + " §abeing victorious!");
-								
+							} else { // War is not engaged and is accepted.
+								s.sendMessage("§cYou cannot end a war that isn't engaged!");
+								s.sendMessage("§cInstead, you must cancel/forfeit the war. §7/war cancel/forfeit§c.");
 							}
 						} else {
 							s.sendMessage("§cYour clan is not involved in any wars!");
@@ -593,7 +772,8 @@ public class CmdExecutor implements CommandExecutor {
 				for (Faction fa : FactionColl.get().getAll()) {
 					if (!(fa.getName().equalsIgnoreCase("safezone")) && !(fa.getName().equalsIgnoreCase("warzone")) && !(fa.getName().equalsIgnoreCase(FactionColl.get().getByName("wilderness").getName()))) {
 						if (getWarTarget(fa) != null && getWarRequester(fa) != null && !factionsProcessed.contains(fa.getName())) {
-							if (!getWarStatus(fa).equalsIgnoreCase("forfeited") && !getWarStatus(fa).equalsIgnoreCase("denied") && !getWarStatus(fa).equalsIgnoreCase("cancelled")) {
+							String status = getWarStatus(fa);
+							if (!status.equalsIgnoreCase("denied") && !status.equalsIgnoreCase("cancelled") && !status.equalsIgnoreCase("forfeited") && !status.equalsIgnoreCase("available")) {
 								s.sendMessage(getWarRequester(fa).getColorTo(mP) + getWarRequester(fa).getName() + " §7<--[" + statusToColour(getWarStatus(fa)) + "§7]--> " + getWarTarget(fa).getColorTo(mP) + getWarTarget(fa).getName());
 								factionsProcessed.add(getWarTarget(fa).getName());
 								factionsProcessed.add(getWarRequester(fa).getName());
@@ -604,8 +784,42 @@ public class CmdExecutor implements CommandExecutor {
 			}
 		}
 		
-		if (!cmdSuccess) {
-			s.sendMessage("§6[§cWAR§6] §cInvalid command/arguments. Type, '§7/clan [? | help]§c'.");;
+		if (!cmdSuccess) {			
+			switch (args[0]) {
+			case "status":
+				s.sendMessage("§6[§cWAR§6] §4§lUsage: §r§c/war status [clan]");
+				break;
+			case "lookup":
+				s.sendMessage("§6[§cWAR§6] §4§lUsage: §r§c/war lookup <id/clan>");
+				break;
+			case "declare":
+				s.sendMessage("§6[§cWAR§6] §4§lUsage: §r§c/war declare <clan>");
+				break;
+			case "end":
+				s.sendMessage("§6[§cWAR§6] §4§lUsage: §r§c/war end <victorious_clan>");
+				break;
+			case "forfeit":
+				s.sendMessage("§6[§cWAR§6] §4§lUsage: §r§c/war ");
+				break;
+			case "cancel":
+				s.sendMessage("§6[§cWAR§6] §4§lUsage: §r§c/war ");
+				break;
+			case "accept":
+				s.sendMessage("§6[§cWAR§6] §4§lUsage: §r§c/war ");
+				break;
+			case "deny":
+				s.sendMessage("§6[§cWAR§6] §4§lUsage: §r§c/war ");
+				break;
+			case "upcoming":
+				s.sendMessage("§6[§cWAR§6] §4§lUsage: §r§c/war ");
+				break;
+			case "engage":
+				s.sendMessage("§6[§cWAR§6] §4§lUsage: §r§c/war ");
+				break;
+			default:
+				s.sendMessage("§6[§cWAR§6] §4§lInvalid Command. §r§cType §3/war [help|?]§c.");
+				break;
+			}
 		}
 		
 		return false;
@@ -666,7 +880,8 @@ public class CmdExecutor implements CommandExecutor {
 	}
 	
 	public boolean hasWar(Faction f) {
-		if (plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("forfeited") || plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("available") || plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("denied") || plugin.factionWars.getString(f.getName() + ".Status").equalsIgnoreCase("cancelled")) {
+		String status = plugin.factionWars.getString(f.getName() + ".Status");
+		if (status.equalsIgnoreCase("forfeited") || status.equalsIgnoreCase("available") || status.equalsIgnoreCase("denied") || status.equalsIgnoreCase("cancelled")) {
 			return false;
 		} else {
 			return true;
@@ -736,6 +951,14 @@ public class CmdExecutor implements CommandExecutor {
 		} else {
 			plugin.factionWars.set(f.getName() + ".Target", "none");
 		}
+	}
+	
+public String roundFloatTwo(float n) {
+		
+		DecimalFormat df = new DecimalFormat("#.##");
+		df.setRoundingMode(RoundingMode.CEILING);
+		return df.format((double)n);
+		
 	}
 	
 	public ChatColor colorCodeKD(float kd) {
