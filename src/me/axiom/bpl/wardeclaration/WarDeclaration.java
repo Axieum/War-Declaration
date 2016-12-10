@@ -53,6 +53,7 @@ public class WarDeclaration extends JavaPlugin {
 	public HashSet<PlayerStats> playerStats = new HashSet<PlayerStats>();
 	
 	public HashSet<Faction> engagedWars = new HashSet<Faction>();
+	public HashSet<Faction> engageConfirmation = new HashSet<Faction>();
 	
 	public HashMap<Faction, Faction> factionVictoryDecider = new HashMap<Faction, Faction>();
 	
@@ -163,11 +164,9 @@ public class WarDeclaration extends JavaPlugin {
 						long timeNow = System.currentTimeMillis();
 						double secsSinceEnd = (timeNow - timeWarEnd) / 1000;
 						
-						if (secsSinceEnd > 30) {
+						if (secsSinceEnd > 900) {
 							logger.info("[WarDeclaration] The war with ID '" + warId + "', is being regenerated back.");
-							revertWarDamage(factionWarLog.getString(warId + ".Target"));
-							factionWarLog.set(warId + ".Regenerated", true);
-							saveFactionWarsLogFile();
+							revertWarDamage(factionWarLog.getString(warId + ".Target"), warId);
 						}
 					}
 					
@@ -177,7 +176,7 @@ public class WarDeclaration extends JavaPlugin {
 		}, 1200L, 1200L); // 1200 ticks = 60 seconds.
 	}
 	
-	public void revertWarDamage(String faction) {
+	public void revertWarDamage(String faction, String warId) {
 		// Grab all keys relating to that war and randomly regenerate the blocks back!
 		ConfigurationSection sectionFaction = savedBlocksLog.getConfigurationSection(faction);
 		if (sectionFaction == null) { // Nothing to regenerate back.
@@ -211,7 +210,7 @@ public class WarDeclaration extends JavaPlugin {
 			 * REGENERATE BLOCK.
 			 */
 			
-			int delay = 20; // ticks, 20 = 1 sec
+			int delay = (int)Math.floor((Math.random() * 120) + 20); // ticks, 20 = 1 sec
 			
 			if (b.getType() == Material.SAND || b.getType() == Material.GRAVEL || b.getType() == Material.ANVIL || b.getType() == Material.LADDER || b.getType() == Material.LONG_GRASS || b.getType() == Material.YELLOW_FLOWER || b.getType() == Material.RED_ROSE) {
 				// This means the solid blocks need to generate, then these blocks after those blocks have.
@@ -223,6 +222,8 @@ public class WarDeclaration extends JavaPlugin {
 			
 			if (blocksRegenerated >= blocksToRegenerate) {
 				savedBlocksLog.set(faction, null);
+				factionWarLog.set(warId + ".Regenerated", true);
+				saveFactionWarsLogFile();
 				saveSavedBlocksFile();
 			}
 			
@@ -242,21 +243,39 @@ public class WarDeclaration extends JavaPlugin {
 	
 	public void initialisePlayerStats() {
 		
-		for (Player p : getServer().getOnlinePlayers()) { // Probably won't do much (unless server is reloaded).
-			String playerName = p.getName();
-			PlayerStats pS = new PlayerStats(p.getUniqueId(), playerStatsLog.getInt(p.getUniqueId() + ".Kills"), playerStatsLog.getInt(p.getUniqueId() + ".Deaths"));
-			playerStats.add(pS);
-			logger.info("[WarDeclaration] Added " + playerName + "'s stats to memory.");
+		for (Player p : getServer().getOnlinePlayers()) {
+			if (MPlayer.get(p).hasFaction()) {
+				String playerName = p.getName();
+				if (getPlayerStats(p.getUniqueId()) == null) { // They're not loaded yet.
+					if (factionWars.getBoolean(MPlayer.get(p).getFaction().getName() + ".Engaged")) { // Are they engaged, should we actually load them in necessary?
+						PlayerStats pS;
+						if (playerStatsLog.getKeys(false).contains(p.getUniqueId().toString())) { // Try to load their saved stats.
+							pS = new PlayerStats(p.getUniqueId(), playerStatsLog.getInt(p.getUniqueId() + ".Kills"), playerStatsLog.getInt(p.getUniqueId() + ".Deaths"));
+						} else { // Weren't saved. Reset.
+							pS = new PlayerStats(p.getUniqueId(), 0, 0);
+						}
+						playerStats.add(pS);
+						logger.info("[WarDeclaration | Player Initialization] " + playerName + "'s stats are now being tracked!");
+					}
+				}
+			}
 		}
 		
-		// Now, if a player was in the war, but logged out before it ended. We also need to load in offline players that in the file.
-		for (String uuidString : playerStatsLog.getKeys(false)) {
-			UUID uuid = UUID.fromString(uuidString);
-			if (getPlayerStats(uuid) == null && Bukkit.getPlayer(uuid) == null) { // They're not loaded into memory AND they're not online.
-				OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
-				PlayerStats pS = new PlayerStats(player.getUniqueId(), playerStatsLog.getInt(player.getUniqueId() + ".Kills"), playerStatsLog.getInt(player.getUniqueId() + ".Deaths"));
-				playerStats.add(pS);
-				logger.info("[WarDeclaration] Added (offline) " + pS.getOfflinePlayer().getName() + "'s stats to memory.");
+		for (OfflinePlayer p : getServer().getOfflinePlayers()) { // Load offline players.
+			if (MPlayer.get(p.getUniqueId()).hasFaction()) {
+				if (getPlayerStats(p.getUniqueId()) == null) { // They're not loaded yet.
+					if (factionWars.getBoolean(MPlayer.get(p).getFaction().getName() + ".Engaged")) { // We only need to load them if they're engaged.
+						String playerName = p.getName();
+						PlayerStats pS;
+						if (playerStatsLog.getKeys(false).contains(p.getUniqueId().toString())) { // Try to load their saved stats.
+							pS = new PlayerStats(p.getUniqueId(), playerStatsLog.getInt(p.getUniqueId() + ".Kills"), playerStatsLog.getInt(p.getUniqueId() + ".Deaths"));
+						} else { // Weren't saved. Reset.
+							pS = new PlayerStats(p.getUniqueId(), 0, 0);
+						}
+						playerStats.add(pS);
+						logger.info("[WarDeclaration | Player Initialization] " + playerName + "'s stats are ready for their login.");
+					}
+				}
 			}
 		}
 		
@@ -264,7 +283,7 @@ public class WarDeclaration extends JavaPlugin {
 
 	public PlayerStats getPlayerStats(UUID uuid) {
 		for (PlayerStats pS : playerStats) {
-			if (pS.getUUID() == uuid) {
+			if (pS.getUUID().toString().equals(uuid.toString())) {
 				return pS;
 			}
 		}
@@ -276,10 +295,29 @@ public class WarDeclaration extends JavaPlugin {
 		// Note: Players who join the war late, will be controlled via the LoginListener.class
 		for (Player p : getServer().getOnlinePlayers()) {
 			MPlayer mP = MPlayer.get(p);
-			if (mP.getFaction() == f) {
-				PlayerStats pS = getPlayerStats(p.getUniqueId());
-				pS.setDeaths(0);
-				pS.setKills(0);
+			if (mP.hasFaction()) {
+				if (mP.getFaction() == f) {
+					PlayerStats pS = getPlayerStats(p.getUniqueId());
+					pS.setDeaths(0);
+					pS.setKills(0);
+				}
+			}
+		}
+		for (OfflinePlayer p : getServer().getOfflinePlayers()) { // Load offline players.
+			if (MPlayer.get(p.getUniqueId()).hasFaction()) {
+				if (MPlayer.get(p.getUniqueId()).getFaction() == f) { // Ensure we are targeting a player from the defined faction.
+					// They're in the faction, so reset their stats.
+					if (getPlayerStats(p.getUniqueId()) != null) {
+						PlayerStats pS = getPlayerStats(p.getUniqueId());
+						pS.setKills(0);
+						pS.setDeaths(0);
+					} else {
+						// They're stats aren't loaded.
+						PlayerStats pS = new PlayerStats(p.getUniqueId(), 0, 0);
+						playerStats.add(pS);
+						logger.info("[WarDeclaration | Player Initialization] " + p.getName() + "'s stats are now being tracked!");
+					}
+				}
 			}
 		}
 	}
@@ -333,21 +371,16 @@ public class WarDeclaration extends JavaPlugin {
 
 		for (PlayerStats pS : playerStats) {
 			
-			logger.info(pS.getPlayer().getName());
-			
 			MPlayer mP;
 			Faction f;
 			
-			if (pS.getPlayer().isOnline()) {
-				logger.info("Loading online player.");
+			if (pS.getPlayer() != null) {
 				mP = MPlayer.get(pS.getPlayer());
 			} else {
-				logger.info("Loading offline player.");
-				mP = MPlayer.get(pS.getOfflinePlayer());
+				mP = MPlayer.get(pS.getOfflinePlayer().getUniqueId());
 			}
 			
 			f = mP.getFaction();
-			logger.info(f.getName() + " is for previous player.");
 			
 			if (f == winFaction || f == loseFaction) { // That player is associated with this war that took place.
 				factionWarLog.set(String.valueOf(newKey) + "." + f.getName() + "." + mP.getUuid() + ".Kills", pS.getKills());
@@ -436,9 +469,16 @@ public class WarDeclaration extends JavaPlugin {
 		
 		for (PlayerStats pS : playerStats) {
 			
-			playerStatsLog.set(pS.getPlayer().getUniqueId() + ".Name", pS.getPlayer().getName());
-			playerStatsLog.set(pS.getPlayer().getUniqueId() + ".Kills", pS.getKills());
-			playerStatsLog.set(pS.getPlayer().getUniqueId() + ".Deaths", pS.getDeaths());
+			playerStatsLog.set(pS.getUUID() + ".Kills", pS.getKills());
+			playerStatsLog.set(pS.getUUID() + ".Deaths", pS.getDeaths());
+			
+			// Online or Offline?
+			if (pS.getPlayer() != null) {
+				playerStatsLog.set(pS.getUUID() + ".Name", pS.getPlayer().getName());
+			} else {
+				playerStatsLog.set(pS.getUUID() + ".Name", pS.getOfflinePlayer().getName());
+				
+			}
 			
 		}
 			
