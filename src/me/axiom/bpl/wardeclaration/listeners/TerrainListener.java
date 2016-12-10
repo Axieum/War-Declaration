@@ -12,7 +12,6 @@ import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.material.MaterialData;
-
 import com.massivecraft.factions.entity.BoardColl;
 import com.massivecraft.factions.entity.MPlayer;
 import com.massivecraft.massivecore.ps.PS;
@@ -109,13 +108,11 @@ public class TerrainListener implements Listener {
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockPlaceEvent(BlockPlaceEvent e) {
-		
 		Block b = e.getBlock();
 		
 		String facName = BoardColl.get().getFactionAt(PS.valueOf(b)).getName();
 		MPlayer p = MPlayer.get(e.getPlayer());
 		p.getFaction().getName();
-		
 		if (plugin.factionWars.getBoolean(facName + ".Engaged") && plugin.factionWars.getString(facName + ".Target").equalsIgnoreCase(facName)) { // If that faction is engaged. And they are the defender.
 			
 			if (!plugin.savedBlocks.containsKey(b.getLocation())) {
@@ -130,6 +127,9 @@ public class TerrainListener implements Listener {
 			}
 			
 		}
+		
+		
+		e.setCancelled(false);
 		
 	}
 	
