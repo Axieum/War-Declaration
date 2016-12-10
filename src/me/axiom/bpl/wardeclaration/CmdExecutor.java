@@ -786,6 +786,9 @@ public class CmdExecutor implements CommandExecutor {
 		
 		if (!cmdSuccess) {			
 			switch (args[0]) {
+			case "stats":
+				s.sendMessage("§6[§cWAR§6] §4§lUsage: §r§c/war stats [clan]");
+				break;
 			case "status":
 				s.sendMessage("§6[§cWAR§6] §4§lUsage: §r§c/war status [clan]");
 				break;
