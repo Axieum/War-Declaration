@@ -8,6 +8,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import com.massivecraft.factions.entity.Faction;
 import com.massivecraft.factions.entity.FactionColl;
 import com.massivecraft.factions.entity.MPlayer;
+import com.massivecraft.factions.event.EventFactionsDisband;
 import com.massivecraft.factions.event.EventFactionsMembershipChange;
 import com.massivecraft.factions.event.EventFactionsMembershipChange.MembershipChangeReason;
 
@@ -123,11 +124,27 @@ public class LoginListener implements Listener {
 		}
 		
 		// Player leaves their faction.
-		if (r.equals(MembershipChangeReason.LEAVE)) {
+		if (r.equals(MembershipChangeReason.LEAVE) || r.equals(MembershipChangeReason.KICK)) {
 			if (getWarEngaged(f)) {
 				p.message("§6[§cWAR§6] §cYour clan (§e" + f.getName() + "§c) is currently at war! Try again later.");
 				e.setCancelled(true);
 			}
+		}
+		
+	}
+	
+	/*
+	 * Should a faction be disbanded, if they were in a war, forfeit it/cancel it.
+	 */
+	
+	@EventHandler
+	public void onFactionDisband(EventFactionsDisband e) {
+		
+		Faction f = e.getFaction();
+		
+		if (hasWar(f)) {
+			e.getMPlayer().message("§6[§cWAR§6] §cYou're currently in a war! Forfeit or cancel this war to proceed.");
+			e.setCancelled(true);
 		}
 		
 	}
