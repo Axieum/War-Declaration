@@ -8,6 +8,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import com.massivecraft.factions.entity.Faction;
 import com.massivecraft.factions.entity.FactionColl;
 import com.massivecraft.factions.entity.MPlayer;
+import com.massivecraft.factions.event.EventFactionsMembershipChange;
+import com.massivecraft.factions.event.EventFactionsMembershipChange.MembershipChangeReason;
 
 import me.axiom.bpl.wardeclaration.PlayerStats;
 import me.axiom.bpl.wardeclaration.WarDeclaration;
@@ -19,20 +21,26 @@ public class LoginListener implements Listener {
 		this.plugin = instance;
 	}
 	
+	/*
+	 * Initialise the joining player's stats, if their faction is currently engaged.
+	 */
+	
 	@EventHandler
 	public void onPlayerJoinEvent(PlayerJoinEvent e) {
-		
-		/*
-		 * Initially, if the player is joining and hasn't previously been loaded, we need to load him a new PlayerStats instance.
-		 * Should this not be the case, we need to convert their Offline PlayerStats instance to an Online version.
-		 */
-		
+
 		if (plugin.getPlayerStats(e.getPlayer().getUniqueId()) == null) { // They were not previously loaded. Hence, they should be a NEW player.
-			PlayerStats pS = new PlayerStats(e.getPlayer().getUniqueId(), 0, 0);
-			plugin.playerStats.add(pS);
+			if (MPlayer.get(e.getPlayer()).hasFaction()) { // They should be in a faction.
+				if (getWarEngaged(MPlayer.get(e.getPlayer()).getFaction())) { // Should be engaged.
+					PlayerStats pS = new PlayerStats(e.getPlayer().getUniqueId(), 0, 0);
+					plugin.playerStats.add(pS);
+					plugin.logger.info(e.getPlayer().getName() + "'s stats are now being tracked!");
+				}
+			}
 		} else {
-			plugin.logger.info(plugin.getPlayerStats(e.getPlayer().getUniqueId()).getPlayer().getName() + " was already loaded.");
+			plugin.logger.info(plugin.getPlayerStats(e.getPlayer().getUniqueId()).getPlayer().getName() + "'s stats are already being tracked.");
 		}
+		
+		// Begin login messaging procedures
 		
 		MPlayer p = MPlayer.get(e.getPlayer());
 		
@@ -47,8 +55,7 @@ public class LoginListener implements Listener {
 			if (p.hasFaction()) {
 				if (getWarEngaged(f)) {
 					p.getPlayer().sendMessage("§6[§cWARS§6] §7Your war against " + opp.getColorTo(p) + opp.getName() + " §7is currently §3ENGAGED§7!");
-					// Create a PlayerStats record.
-					plugin.playerStats.add(new PlayerStats(p.getPlayer().getUniqueId(), 0, 0));
+					// TODO: Check if it's their first time joining the war; if so, reset their stats.
 				} else if (hasWar(f)){
 					p.getPlayer().sendMessage(req.getColorTo(f) + req.getName() + " §7recently declared war against your clan! (§f" + convertMillisToDate(getWarTimeOfDeclaration(f)) + "§7)");
 					p.getPlayer().sendMessage("§7War status: " + sta + "§7.");
@@ -76,6 +83,36 @@ public class LoginListener implements Listener {
 				}
 			}
 		}
+	}
+	
+	/*
+	 * Prevent players from joining a faction that is currently in a war.
+	 * Prevent players from abandoning their faction's war while it's engaged.
+	 */
+	
+	@EventHandler
+	public void onPlayerJoinLeaveFaction(EventFactionsMembershipChange e) {
+		
+		MPlayer p = e.getMPlayer();
+		Faction f = e.getNewFaction();
+		MembershipChangeReason r = e.getReason();
+
+		// Player joins new faction.
+		if (r.equals(MembershipChangeReason.JOIN)) {
+			if (getWarEngaged(f)) {
+				p.message("§6[§cWAR§6] §e" + f.getName() + " §cis currently at war! Try again later.");
+				e.setCancelled(true);
+			}
+		}
+		
+		// Player leaves their faction.
+		if (r.equals(MembershipChangeReason.LEAVE)) {
+			if (getWarEngaged(f)) {
+				p.message("§6[§cWAR§6] §cYour clan (§e" + f.getName() + "§c) is currently at war! Try again later.");
+				e.setCancelled(true);
+			}
+		}
+		
 	}
 	
 	public String statusToColour(String msg) {
