@@ -23,17 +23,17 @@ public class FactionNameChangeListener implements Listener {
 			return;
 		}
 		
-		plugin.logger.info("Faction name change detected! Updating data...");
 		Faction f = e.getFaction();
 		String newName = e.getNewName();
 		String oldName = f.getName();
 		
 		if (hasWar(f)) { // If they're currently in a war, this will intefere with many components.
-			e.getMPlayer().message("§6[§cWAR§6] §cIf you were to change your clan's name now, " + getWarOpponent(f).getColorTo(f) + getWarOpponent(f).getName() + " §cwill be confused!");
+			e.getMPlayer().message("§6[§cWAR§6] §cIf you were to change your clan's name now, " + getWarOpponent(f).getColorTo(f) + getWarOpponent(f).getName() + " §cwould be confused!");
 			e.setCancelled(true);
 			return;
 		}
 		
+		plugin.logger.info("Faction name change detected! Updating data...");
 		plugin.factionWars.set(newName, plugin.factionWars.get(oldName));
 		plugin.factionWars.set(oldName, null);
 		plugin.saveFactionWarsFile();
