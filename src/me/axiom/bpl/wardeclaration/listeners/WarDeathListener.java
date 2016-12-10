@@ -25,9 +25,13 @@ public class WarDeathListener implements Listener {
 	
 	@EventHandler
 	public void onPlayerDeathEvent(PlayerDeathEvent e) {
-		
+				
 		Player dead = e.getEntity();
 		Player killer = dead.getKiller();
+		
+		if (!(killer instanceof Player)) { // Is this true PvP combat?
+			return;
+		}
 		
 		MPlayer Mdead = MPlayer.get(dead);
 		MPlayer Mkiller = MPlayer.get(killer);
