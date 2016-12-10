@@ -365,6 +365,10 @@ public class CmdExecutor implements CommandExecutor {
 								setWarStatus(enemyF, "forfeited");
 								setWarEngaged(f, false);
 								setWarEngaged(enemyF, false);
+								setWarForfeitedBy(f, f);
+								setWarForfeitedBy(enemyF, f);
+								plugin.factionWars.set(f.getName() + ".TimeOfEnd", System.currentTimeMillis());
+								plugin.factionWars.set(enemyF.getName() + ".TimeOfEnd", System.currentTimeMillis());
 								s.sendMessage("§eYou §chave §4forfeited §cthe war against " + enemyF.getColorTo(f) + enemyF.getName() + "§c!");
 								f.sendMessage("§cYour clan has §4forfeited §cthe war against " + enemyF.getColorTo(f) + enemyF.getName() + "§c!");
 								enemyF.sendMessage(f.getColorTo(enemyF) + f.getName() + " §ahas §cforfeited §athe war against your clan!");
@@ -431,18 +435,21 @@ public class CmdExecutor implements CommandExecutor {
 						int victoryDeaths = plugin.factionWarLog.getInt(args[1]+ ".VictoryDeaths");
 						int defeatKills = plugin.factionWarLog.getInt(args[1]+ ".DefeatKills");
 						int defeatDeaths = plugin.factionWarLog.getInt(args[1]+ ".DefeatDeaths");
-						int victoryKD = 0;
+						float victoryKD = 0;
 						if (victoryDeaths == 0) {
 							victoryKD = victoryKills;
 						} else {
-							victoryKD = victoryKills / victoryDeaths;
+							victoryKD = (float)((float)victoryKills / (float)victoryDeaths);
 						}
-						int defeatKD = 0;
+						float defeatKD = 0;
 						if (defeatDeaths == 0) {
 							defeatKD = defeatKills;
 						} else {
-							defeatKD = defeatKills / defeatDeaths;
+							defeatKD = (float)((float)defeatKills / (float)defeatDeaths);
 						}
+						
+						// SEND MESSAGES
+						s.sendMessage("§6-----§a§l" + requester.getColorTo(f) + requester.getName() + " §7vs. §c§l" + target.getColorTo(f) + target.getName() + " §c§lStats§r§6-----");
 						
 						s.sendMessage("§7Declared by " + requester.getColorTo(f) + requester.getName() + "§7.");
 						s.sendMessage("§7Targeted against " + target.getColorTo(f) + target.getName() + "§7.");
@@ -451,15 +458,15 @@ public class CmdExecutor implements CommandExecutor {
 						s.sendMessage("§7Time of war end: §e" + timeOfEnd + "§7.");
 						s.sendMessage(victory.getColorTo(f) + victory.getName() + " §7was §aVictorious§7!");
 						s.sendMessage(defeat.getColorTo(f) + defeat.getName() + " §7was §cDefeated§7.");
+						if (method.equalsIgnoreCase("forfeit")) {
+							s.sendMessage(defeat.getColorTo(f) + defeat.getName() + " §7had §cFORFEITED §7the war!");
+						}
 						s.sendMessage(victory.getColorTo(f) + victory.getName() + " §7had §8" + victoryKills + " kills §7and §8" + victoryDeaths + " deaths§7.");
 						s.sendMessage(victory.getColorTo(f) + victory.getName() + " §7had a K/D Ratio of " + colorCodeKD(victoryKD) + roundFloatTwo(victoryKD) + "§7.");
 						s.sendMessage(defeat.getColorTo(f) + defeat.getName() + " §7had §8" + defeatKills + " kills §7and §8" + defeatDeaths + " deaths§7.");
 						s.sendMessage(defeat.getColorTo(f) + defeat.getName() + " §7had a K/D Ratio of " + colorCodeKD(defeatKD) + roundFloatTwo(defeatKD) + "§7.");
-						if (method.equalsIgnoreCase("forfeited")) {
-							s.sendMessage(defeat.getColorTo(f) + defeat.getName() + " §7had §cFORFEITED §7the war!");
-						}
 						
-						s.sendMessage("§7---- §6§lVICTORIOUS STATS§7 ----");
+						s.sendMessage("§7---- §6§lVICTORIOUS§7 ----");
 						
 						ConfigurationSection sectionVictory = plugin.factionWarLog.getConfigurationSection(args[1] + "." + victory.getName());
 						
@@ -494,7 +501,7 @@ public class CmdExecutor implements CommandExecutor {
 							}
 						}
 						
-						s.sendMessage("§7------ §6§lDEFEAT STATS§7 ------");
+						s.sendMessage("§7------ §6§lDEFEAT§7 ------");
 						
 						ConfigurationSection sectionDefeat = plugin.factionWarLog.getConfigurationSection(args[1] + "." + defeat.getName());
 						
@@ -828,7 +835,7 @@ public class CmdExecutor implements CommandExecutor {
 		return false;
 		
 	}
-	
+
 	public boolean isParsable(String input){
 	    boolean parsable = true;
 	    try{
@@ -956,7 +963,13 @@ public class CmdExecutor implements CommandExecutor {
 		}
 	}
 	
-public String roundFloatTwo(float n) {
+	private void setWarForfeitedBy(Faction f, Faction forfeiter) {
+		
+		plugin.factionWars.set(f.getName() + ".ForfeitedBy", forfeiter.getName());
+		
+	}
+	
+	public String roundFloatTwo(float n) {
 		
 		DecimalFormat df = new DecimalFormat("#.##");
 		df.setRoundingMode(RoundingMode.CEILING);
