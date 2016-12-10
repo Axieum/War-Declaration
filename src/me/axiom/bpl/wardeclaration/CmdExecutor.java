@@ -563,13 +563,13 @@ public class CmdExecutor implements CommandExecutor {
 									if (args[1].equalsIgnoreCase(getWarRequester(f).getName()) || args[1].equalsIgnoreCase(getWarTarget(f).getName())) {
 										if (plugin.factionVictoryDecider.get(getWarOpponent(f)).getName().equalsIgnoreCase(args[1])) {
 											// The victory clan specified matches both clans opinions.
-											Faction victory = FactionColl.get().getByName(args[1]);
+											Faction victory = FactionColl.get().getByName(plugin.factionVictoryDecider.get(getWarOpponent(f)).getName());
 											Faction loss = getWarOpponent(victory);
 											plugin.logger.info(loss.getName() + " was defeated by " + victory.getName());
 											plugin.addWarLog(victory, loss, "ended");
-											setWarStatus(f, "available");
+											setWarStatus(victory, "available");
 											setWarStatus(loss, "available");
-											setWarEngaged(f, false);
+											setWarEngaged(victory, false);
 											setWarEngaged(loss, false);
 											for (Player p : Bukkit.getOnlinePlayers()) {
 												p.sendMessage("§6[§cWAR§6] §a" + victory.getName() + " §7was victorious in the war against §c" + loss.getName() + "§7!");
