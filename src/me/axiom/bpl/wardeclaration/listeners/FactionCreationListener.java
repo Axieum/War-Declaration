@@ -24,6 +24,8 @@ public class FactionCreationListener implements Listener {
 		plugin.factionWars.set(name + ".Engaged", false);
 		plugin.factionWars.set(name + ".ForfeitedBy", "none");
 		plugin.factionWars.set(name + ".TimeOfDeclaration", 0);
+		plugin.factionWars.set(name + ".TimeOfEngage", 0);
+		plugin.factionWars.set(name + ".TimeOfEnd", 0);
 		plugin.logger.info("Faction has been successfully initialised!");
 		plugin.saveFactionWarsFile();
 	}
