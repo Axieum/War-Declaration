@@ -8,7 +8,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-
 import com.massivecraft.factions.entity.Faction;
 import com.massivecraft.factions.entity.FactionColl;
 import com.massivecraft.factions.entity.MPlayer;
@@ -21,6 +20,20 @@ public class WarDeathListener implements Listener {
 	WarDeclaration plugin;
 	public WarDeathListener(WarDeclaration instance) {
 		this.plugin = instance;
+	}
+	
+	@EventHandler
+	public void onPlayerDeathEventInventory(PlayerDeathEvent e) {
+		Player p = e.getEntity();
+		MPlayer mP = MPlayer.get(p);
+		if (mP.hasFaction()) {
+			if (hasWar(mP.getFaction())) {
+				if (getWarEngaged(mP.getFaction())) {
+					return;
+				}
+			}
+		}
+        e.setKeepInventory(true);
 	}
 	
 	@EventHandler
@@ -56,7 +69,8 @@ public class WarDeathListener implements Listener {
 		if (hasWar(Mdead.getFaction()) && getWarEngaged(Mdead.getFaction()) == true) { // Check if the dead person has a war and is engaged.
 			if (hasWar(Mkiller.getFaction()) && getWarEngaged(Mdead.getFaction()) == true) { // Check if the killer has a war and is engaged.
 				if (getWarOpponent(Mdead.getFaction()) == Mkiller.getFaction()) { // This means that that they are in the same war.
-				
+					
+									
 					// Retrieve the stats for both players.
 					PlayerStats killerStats = plugin.getPlayerStats(killer.getUniqueId());
 					PlayerStats deadStats = plugin.getPlayerStats(dead.getUniqueId());
