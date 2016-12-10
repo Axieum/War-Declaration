@@ -29,6 +29,10 @@ public class WarDeathListener implements Listener {
 		if (mP.hasFaction()) {
 			if (hasWar(mP.getFaction())) {
 				if (getWarEngaged(mP.getFaction())) {
+					// Retrieve the stats for both players.
+					PlayerStats pStats = plugin.getPlayerStats(p.getUniqueId());
+					pStats.setDeaths(pStats.getDeaths()+1);
+					p.sendMessage("§6[§cWAR§6] §8K/D Ratio: §7" + colorCode(pStats.getKD()) + roundFloatTwo(pStats.getKD()));
 					return;
 				}
 			}
@@ -79,7 +83,7 @@ public class WarDeathListener implements Listener {
 					
 					// Add one to their kills/deaths...
 					killerStats.setKills(killerKills+1);
-					deadStats.setDeaths(deadDeaths+1);				
+					deadStats.setDeaths(deadDeaths+1);
 					
 					// Send them a message with their NEW K/D Ratio.					
 					killer.sendMessage("§6[§cWAR§6] §8K/D Ratio: §7" + colorCode(killerStats.getKD()) + roundFloatTwo(killerStats.getKD()));
